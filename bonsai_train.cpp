@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
   int base_no = 0;
   int batch_size = 1000;
 
-  for (int i = int(0.5 * num_lbl); ; i += batch_size) {
+  for (int i = int(1 * num_lbl); ; i += batch_size) {
       if (i == num_lbl + batch_size) break;
 
       i = min(i, num_lbl);

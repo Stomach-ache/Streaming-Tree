@@ -719,6 +719,17 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
 
   _int nc = mat->nc;  // number of data points
   _int nr = mat->nr; // feature dim
+  partition.resize( nc );
+
+  /*
+   * use random partion instead of kmeans clustering.
+  random_device rd;
+  mt19937 gen(rd());
+  uniform_int_distribution<> dis(0, K-1);
+
+  for (int i = 0; i < nc; ++ i) partition[i] = dis(gen);
+  return ;
+  */
 
   vector<_int> c(K);
 
@@ -740,7 +751,6 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
   _float** cosines;
   init_2d_float( K, nc, cosines );
 
-  partition.resize( nc );
 
   _float old_cos = -10000;
   _float new_cos = -1;
@@ -938,7 +948,7 @@ Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param& param
 	  VecI partition; // partitioning starting from 0
 	  cout << "split internal node" << endl;
 
-	    split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param );
+	   split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param );
 
 
 	  _int n_effective_partitions = unordered_set<_int>(partition.begin(), partition.end()).size();
