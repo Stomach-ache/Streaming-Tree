@@ -32,6 +32,6 @@
 *.app
 
 # python cache
-__pycache__/
+__pycache__/*
 
 
