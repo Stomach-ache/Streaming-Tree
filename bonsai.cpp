@@ -20,6 +20,7 @@ _float EPSILON = 1e-5;
 mutex mtx;
 thread_local mt19937 reng; // random number generator used during training
 
+
 _int get_rand_num( _int siz )
 {
   _llint r = reng();
@@ -512,7 +513,7 @@ void reindex_rows( SMatF* mat, _int nr, VecI& rows )
     }
 }
 
-thread_local _bool* mask; // shared among threads?
+thread_local _bool* mask;
 void active_dims( SMatF* mat, VecI& insts, VecI& dims, _llint& nnz )
 {
   nnz = 0;
@@ -1351,6 +1352,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param )
     cout << "nodes.size(): " << nodes.size() << endl;
 
   for( _int i=0; i<nodes.size(); i++ ) {
+    if (i > 0) assert (nodes[i]->depth >= nodes[i - 1]->depth);
     // predict at each node in tree
     // if( i%100==0 )
     Node* node = nodes[i];
@@ -1368,6 +1370,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param )
       cout << "node " << i << " ended" << endl;
   }
 
+  cout << score_mat->nc << ' ' << score_mat->nr << endl;
   if(PD_DEBUG)
     cout << "exponentiate scores started "<< endl;
   exponentiate_scores( score_mat );
@@ -1394,8 +1397,10 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
     timer.stop();
     Tree* tree = new Tree( model_dir, i );
 
+    cout << "predict starts..." << endl;
     timer.resume();
     SMatF* tree_score_mat = predict_tree( tst_X_Xf, tree, param );
+    cout << "predict done..." << endl;
 
     {
       lock_guard<mutex> lock(mtx);
@@ -1404,7 +1409,9 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
     }
 
     delete tree;
+    cout << "free tree done..." << endl;
     delete tree_score_mat;
+    cout << "free tree score mat done..." << endl;
 
     cout<<"tree "<<i<<" predicting completed"<<endl;
     timer.stop();
@@ -1465,6 +1472,17 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
 
   model_size = *m_size;
   delete m_size;
+
+  ifstream fin(model_dir + "/lbl_idx");
+  vector<int> lbl_idx;
+  int v;
+  while (fin >> v) lbl_idx.push_back(v);
+
+  for (int i = 0; i < score_mat->nc; ++ i) {
+      for (int j = 0; j < score_mat->size[i]; ++ j) {
+          score_mat->data[i][j].first = lbl_idx[score_mat->data[i][j].first];
+      }
+  }
 
   for( _int i=0; i<score_mat->nc; i++ ) // for each testing point
     {

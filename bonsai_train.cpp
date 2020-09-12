@@ -118,35 +118,77 @@ int main(int argc, char* argv[])
 
   // modified_code starts....2020.09.11
   // sort labels by frequency in descending order
+  cout << "start label sorting..." << endl;
   int num_lbl = trn_X_Y->nr;
   SMatF *tmp = trn_X_Y->transpose();
-  stable_sort(tmp->data, tmp->data+num_lbl, [&](pair<_int,T> *a, pair<_int,T> *b) {
-          return tmp->size[a-tmp->data] > tmp->size[b-tmp->data];
-          });
-  stable_sort(tmp->size, tmp->size+num_lbl, [&](int a, int b) {
-          return a > b;
+
+  delete trn_X_Y;
+  trn_X_Y = nullptr;
+
+  cout << "matrix transpose done..." << endl;
+  cout << tmp->nc << ' ' << tmp->nr << endl;
+
+  vector<int> lbl_freq(tmp->nc), lbl_idx(tmp->nc);
+  for (int i = 0; i < tmp->nc; ++ i) lbl_freq[i] = tmp->size[i];
+  for (int i = 0; i < tmp->nc; ++ i) lbl_idx[i] = i;
+  sort(begin(lbl_idx), end(lbl_idx), [&lbl_freq] (int i, int j) {
+          return lbl_freq[i] > lbl_freq[j];
           });
 
+  SMatF *tmp2 = new SMatF (tmp->nr, tmp->nc);
+  for (int i = 0; i < tmp->nc; ++ i) {
+      tmp2->data[i] = tmp->data[lbl_idx[i]];
+      tmp2->size[i] = tmp->size[lbl_idx[i]];
+  }
+
+  // write lbl_idx to file, also used in inference
+  string filename = model_dir + "/lbl_idx";
+  ofstream fout(filename);
+  // the important part
+  for (const auto &e : lbl_idx) fout << e << "\n";
+
+  tmp = tmp2;
+  tmp2 = nullptr;
+  cout << tmp->nc << ' ' << tmp->nr << endl;
+
+  cout << "label sorting done..." << endl;
   // slicing part of
   //
+  _float train_time;
   bool init = true;
-  for (int i = int(0.5 * num_lbl); i <= num_lbl; i += batch_size) {
+  int base_no = 0;
+  int batch_size = 1000;
+
+  for (int i = int(0.5 * num_lbl); ; i += batch_size) {
+      if (i == num_lbl + batch_size) break;
+
       i = min(i, num_lbl);
+      cout << "start training using labels from " << base_no << " to " << i << endl;
       tmp->nc = i;
+      cout << "do matrix transpose..." << endl;
       trn_X_Y = tmp->transpose();
+      cout << "ready to train ...." << endl;
       if (init) {
         train_trees( trn_X_Xf, trn_X_Y, trn_X_XY, param, model_dir, train_time );
       } else {
-        update_trees( trn_X_Xf, trn_X_Y, trn_X_XY, param, model_dir, train_time );
+        update_trees( trn_X_Xf, trn_X_Y, trn_X_XY, param, model_dir, train_time, base_no );
       }
+      //if (init) ++ param.max_depth;
       init = false;
+      base_no = i;
+      delete trn_X_Y;
+      trn_X_Y = nullptr;
   }
   // modified_code ends....2020.09.11
 
+  /*
   _float train_time;
   train_trees( trn_X_Xf, trn_X_Y, trn_X_XY, param, model_dir, train_time );
+  */
   cout << "Training time: " << train_time << " s" << endl;
 
+  delete tmp;
   delete trn_X_Xf;
-  delete trn_X_Y;
+
+  return 0;
 }

@@ -1,5 +1,5 @@
 /*
-  Code written by : Sujay Khandagale and Han Xiao 
+  Code written by : Sujay Khandagale and Han Xiao
 
   The code is based on the codebase written by Yashoteja Prabhu for Parabel published at WWW'18.
 */
@@ -23,7 +23,7 @@ void help()
   cerr<<"-s Starting tree index. default=[value saved in trained model]"<< endl;
   cerr<<"-t Number of trees to be grown. default=[value saved in trained model]"<< endl;
   cerr<<"-B Beam search width. default=10]"<< endl;
-  cerr<<"-d Disount value for parent svm score. default=[value saved in trained model (0.98)]"<< endl;	
+  cerr<<"-d Disount value for parent svm score. default=[value saved in trained model (0.98)]"<< endl;
   cerr<<"-q quiet option (0/1). default=[value saved in trained model]"<< endl;
 
   cerr<<"feature and score files are in sparse matrix format"<<endl;
@@ -83,15 +83,16 @@ int main(int argc, char* argv[])
   _float prediction_time, model_size;
   SMatF* score_mat = predict_trees( tst_X_Xf, param, model_dir, prediction_time, model_size );
 
-  cout << "prediction time: " << 1000*(prediction_time/tst_X_Xf->nc) << " ms" << endl; 
-  cout << "model size: " << model_size/1e+6 << " mb" << endl; 
+  cout << "prediction time: " << 1000*(prediction_time/tst_X_Xf->nc) << " ms" << endl;
+  cout << "model size: " << model_size/1e+6 << " mb" << endl;
 
-  PD_DBG { 
-    cout << "score_mat.shape = " << score_mat->nr << "x" << score_mat->nc << endl; 
+  PD_DBG {
+    cout << "score_mat.shape = " << score_mat->nr << "x" << score_mat->nc << endl;
     for(_int i=0; i< score_mat->nc; i++){
       cout << "size at " << i << " = " << score_mat->size[i] << endl;
     }
   }
+
   score_mat->write(score_file);
 
   delete tst_X_Xf;

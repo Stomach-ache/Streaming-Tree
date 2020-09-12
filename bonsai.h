@@ -1,12 +1,15 @@
 /*
-  Code written by : Sujay Khandagale and Han Xiao 
+  Code written by : Sujay Khandagale and Han Xiao
 
   The code is based on the codebase written by Yashoteja Prabhu for Parabel published at WWW'18.
 */
 
-/* The header contains only one modification to the tree structure 
-that is an internal node can have mutiple children 
+/* The header contains only one modification to the tree structure
+that is an internal node can have mutiple children
 (instead of only two in parabel) */
+
+#ifndef BONSAI_H
+#define BONSAI_H
 
 #pragma once
 
@@ -100,10 +103,10 @@ class Node
     for(_int i=0; i < node.children.size(); i++){
       _int c = node.children[i];
       if (i != (node.children.size()-1))
-	fout << c << " ";
+        fout << c << " ";
       else
-	fout << c << "\n";
-    }    
+        fout << c << "\n";
+    }
     // fout << node.pos_child << " " << node.neg_child << "\n";
     fout << node.depth << "\n";
 
@@ -112,6 +115,7 @@ class Node
       fout << " " << node.Y[i];
     fout << "\n";
 
+    assert (node.w != nullptr);
     fout << (*node.w);
   }
 
@@ -119,10 +123,10 @@ class Node
   {
     fin >> node.is_leaf;
     DBG {      cout << "node>>: is_leaf = " << node.is_leaf << endl;	}
-   
+
     if(!node.is_leaf){
       string line;
-      
+
       getline(fin, line);
       getline(fin, line);
       DBG {cout << "node>>: line=" << line << endl;}
@@ -155,7 +159,7 @@ class Node
 
     node.w = new SMatF;
     fin >> (*node.w);
-  } 
+  }
 };
 
 class Tree
@@ -167,7 +171,7 @@ class Tree
 
   Tree()
     {
-		
+
     }
 
   Tree( string model_dir, _int tree_no )
@@ -220,8 +224,9 @@ class Tree
     _int num_node = nodes.size();
     fout << num_node << "\n";
 
-    for( _int i=0; i<num_node; i++ )
+    for( _int i=0; i<num_node; i++ ) {
       fout << (*nodes[i]);
+    }
 
     fout.close();
   }
@@ -308,12 +313,12 @@ class Param
 
       _int pt;
       fin>>pt;
-      part_type = (_Parttype)pt;		
+      part_type = (_Parttype)pt;
 
       fin>>label_graph_path;
 
       fin>>metis_ufactor;
-		  
+
       fin.close();
     }
 
@@ -347,8 +352,30 @@ class Param
   }
 };
 
+void append_bias( SMatF* mat, _float bias );
+_float mult_s_s_vec( pairIF* v1, pairIF* v2, _int size1, _int size2 );
+_float mult_d_s_vec( _float* dvec, pairIF* svec, _int siz );
+void add_s_to_d_vec( pairIF* svec, _int siz, _float* dvec );
+void div_d_vec_by_scalar( _float* dvec, _int siz, _float s );
+void normalize_d_vec( _float* dvec, _int siz );
+void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _int nr, VecI& n_Xf, VecI& partition, Param& param );
+void train_leaf_svms( Node* node, SMatF* X_Xf, SMatF* Y_X, _int nr, VecI& n_Xf, Param& param );
+void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _int nr, VecI& n_Xf, VecI& partition, Param& param );
+void shrink_data_matrices_with_cent_mat( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, VecI& n_Y, Param& param, SMatF*& n_trn_X_Xf, SMatF*& n_trn_Y_X, SMatF*& n_cent_mat, VecI& n_X, VecI& n_Xf, VecI& n_cXf );
+void shrink_data_matrices( SMatF* trn_X_Xf, SMatF* trn_Y_X, VecI& n_Y, Param& param, SMatF*& n_trn_X_Xf, SMatF*& n_trn_Y_X, VecI& n_X, VecI& n_Xf);
+void squeeze_partition_array(vector<_int> &partition);
+
 Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_X_Y, Param& param, _int tree_no );
 void train_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param, string model_dir, _float& train_time );
 
+void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param, string model_dir, _float& train_time, int base_no );
+
 SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param );
 SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& prediction_time, _float& model_size );
+
+
+extern mutex mtx;
+extern thread_local mt19937 reng; // random number generator used during training
+extern thread_local _bool* mask; // shared among threads?
+
+#endif

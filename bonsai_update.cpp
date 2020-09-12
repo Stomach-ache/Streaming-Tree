@@ -1,4 +1,4 @@
-#include <bonsai.h>
+#include "bonsai.h"
 #include <vector>
 #include <algorithm>
 
@@ -14,7 +14,7 @@ void sort_nodes(vector<Node*> &nodes) {
             return nodes[i]->depth < nodes[j]->depth;
             });
 
-    stable_sort(begin(nodes), end(nodes), [&] (Node *a, Node *b) {
+    stable_sort(begin(nodes), end(nodes), [] (Node *a, Node *b) {
             return a->depth < b->depth;
             });
 
@@ -23,37 +23,58 @@ void sort_nodes(vector<Node*> &nodes) {
         reverse_nodes_id[nodes_id[i]] = i;
     }
 
+//    for (int i = 0; i < 10; ++ i) cout << i << ' ' << reverse_nodes_id[i] << endl;
+
+    cout << "build reverse nodes id done..." << endl;
+
     for (int i = 0; i < num_node; ++ i) {
-        for (int j = 0; j < nodes[i].children.size(); ++ j) {
+        for (int j = 0; j < nodes[i]->children.size(); ++ j) {
             nodes[i]->children[j] = reverse_nodes_id[nodes[i]->children[j]];
         }
     }
+
 }
 
-void update_tree(SMatF *X_Xf, SMatF *Y_X,SMatF *cent_mat, Tree *tree, Param &param, int tree_no) {
+void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, Param &param, int tree_no, int base_no) {
     // base_no: the number of labels already observed
     // cent_mat: label representation
+    //
+    reng.seed(tree_no);
+    _int num_X = trn_X_Xf->nc;
+    _int num_Xf = trn_X_Xf->nr;
+    _int num_Y = trn_Y_X->nc;
+    _int num_XY = cent_mat->nr;
 
-    int num_Y = Y_X->nc;
-    for (int i = 0; i < num_Y; ++ i) {
+    // update tree attribute
+    tree->num_Y = num_Y;
+
+    vector<Node*> &nodes = tree->nodes;
+    _int max_n = max( max( max( num_X+1, num_Xf+1 ), num_Y+1 ), num_XY+1);
+    mask = new _bool[ max_n ]();
+
+    //int num_Y = trn_Y_X->nc;
+    cout << "number of labels = " << num_Y << ", base_no = " << base_no << endl;
+    for (int i = base_no; i < num_Y; ++ i) {
 
         // root
         int cur_node = 0;
 
         while  (true) {
-            nodes[cur_node]->n_Y.push_back(i + base_no);
-            float *node_cent = new float[cent_mat->nr];
-            for (int ch: nodes[cur_node]->n_Y) {
-                add_s_to_d_vec(cent_mat->data[ch], cent_mat->size[ch], node_cent);
-            }
-            normalize_d_vec(node_cent, cent_mat->nr);
-
+            nodes[cur_node]->Y.push_back(i);
             if (nodes[cur_node]->is_leaf == false) {
 
                 int maxCh = 0;
                 float maxSim = -1;
                 for (int ch: nodes[cur_node]->children) {
-                    float cos_sim = mult_d_s_vec(node_cent, cent_mat[i + base_no]);
+
+                    float *node_cent = new float[cent_mat->nr];
+                    for (int lbl: nodes[ch]->Y) {
+                        add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], node_cent);
+                    }
+                    normalize_d_vec(node_cent, cent_mat->nr);
+
+                    float cos_sim = mult_d_s_vec(node_cent, cent_mat->data[i], cent_mat->size[i]);
+                    //cout << "child = " << ch << " cos_sim = " << cos_sim << endl;
                     if (cos_sim > maxSim) {
                         maxSim = cos_sim;
                         maxCh = ch;
@@ -68,15 +89,37 @@ void update_tree(SMatF *X_Xf, SMatF *Y_X,SMatF *cent_mat, Tree *tree, Param &par
         //
     }
 
+    cout << "label insertion done..." << endl;
+
     // check if leaf nodes need further split
     //
     int num_nodes = nodes.size();
-    for (int i = 0; i < num_nodes; ++ i) {
-        if (nodes[i]->is_leaf == true) {
-            if (nodes[i]->n_Y.size() > param.num_children) {
-                nodes[i]->is_leaf = false;
+    int tmp_num_nodes = num_nodes;
+    _int max_depth = param.max_depth;
+    for (int i = 0; i < tmp_num_nodes; ++ i) {
+        //cout << "visit node: " << i << endl;
+
+        Node *node = nodes[i];
+        if (node->is_leaf == true) {
+            //cout << "visit leaf node: " << i << endl;
+            VecI& n_Y = node->Y; // labels in node, vector of integer
+            SMatF* n_trn_X_Xf = NULL; // feature matrix in node
+            SMatF* n_trn_Y_X = NULL; // label matrix in node
+            SMatF* n_cent_mat = NULL; // centroid matrix in node
+            VecI n_X;
+            VecI n_Xf;
+            VecI n_cXf;
+
+            // slice the matrix by rows and columns
+            shrink_data_matrices_with_cent_mat( trn_X_Xf, trn_Y_X, cent_mat, n_Y, param, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, n_X, n_Xf, n_cXf );
+            //cout << "slicing matrix done..." << endl;
+
+            if (node->Y.size() > param.num_children && i < num_nodes && node->depth + 1 < max_depth) {
+                //cout << "ready to partition leaf..." << endl;
+                node->is_leaf = false;
 
                 // split node
+                VecI partition; // partitioning starting from 0
                 split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param );
 
                 int n_effective_partitions = unordered_set<_int>(partition.begin(), partition.end()).size();
@@ -96,26 +139,36 @@ void update_tree(SMatF *X_Xf, SMatF *Y_X,SMatF *cent_mat, Tree *tree, Param &par
                     Node* child_node = new Node( child_labels, node->depth+1, max_depth );
 
                     // when not enough labels to partition, make it a leaf
-                    if(child_labels.size() <= param.num_children)
-                        child_node->is_leaf = true;
+                    //if(child_labels.size() <= param.num_children)
+                    child_node->is_leaf = true;
 
                     nodes.push_back( child_node );
                     node->children.push_back( nodes.size()-1 );
+                    ++ tmp_num_nodes;
                 }
 
             } else {
-                // update leaf classifier
-                train_leaf_svms(nodes[i], X_Xf, Y_X, nr, n_Xf, param);
+                //cout << "ready to update leaf..." << endl;
+                //update leaf classifier
+                //
+                if (node->w != nullptr) {
+                    delete node->w;
+                    node->w = nullptr;
+                }
+                train_leaf_svms(node, n_trn_X_Xf, n_trn_Y_X, num_Xf, n_Xf, param);
+                assert (node->w != nullptr);
             }
         }
     }
 
-
+    cout << "leaf partition done..." << endl;
     // rearrange nodes
-    // sort_nodes();
+    sort_nodes(nodes);
+    delete[] mask;
+    cout << "nodes sorting done..." << endl;
 }
 
-void update_trees_thread( SMatF* tst_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Param param, _int s, _int t, string &model_dir) {
+void update_trees_thread( SMatF* trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Param param, _int s, _int t, string model_dir, _float *train_time, int base_no) {
     Timer timer;
 
     for(_int i=s; i<s+t; i++) {
@@ -123,10 +176,12 @@ void update_trees_thread( SMatF* tst_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Para
         cout<<"tree "<<i<<" training started"<<endl;
 
         Tree* tree = new Tree( model_dir, i );
-        update_tree(tree, trn_X_Xf, trn_Y_X, cent_mat, param, i );
+        update_tree(trn_X_Xf, trn_Y_X, cent_mat, tree, param, i, base_no);
         timer.stop();
 
+        cout << "tree write starts..." << endl;
         tree->write( model_dir, i );
+        cout << "tree write done..." << endl;
 
         timer.resume();
         delete tree;
@@ -141,7 +196,7 @@ void update_trees_thread( SMatF* tst_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Para
     }
 }
 
-void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param, string model_dir, _float& train_time ) {
+void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param, string model_dir, _float& train_time, int base_no = 0 ) {
     // called by main
     // train trees in parallel
     _float* t_time = new _float;
@@ -186,7 +241,7 @@ void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& para
 
     cent_mat->threshold( param.cent_th ); // make it sparse by thresholding
 
-    append_bias( trn_X_Xf, param.bias );
+    //append_bias( trn_X_Xf, param.bias );
 
     _int tree_per_thread = (_int)ceil((_float)param.num_tree/param.num_thread);
     vector<thread> threads;
@@ -196,7 +251,7 @@ void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& para
         if( s < param.start_tree+param.num_tree )
         {
             _int t = min( tree_per_thread, param.start_tree+param.num_tree-s );
-            threads.push_back( thread( update_trees_thread, trn_X_Xf, trn_Y_X, cent_mat, param, s, t, model_dir, ref(t_time) ));
+            threads.push_back( thread( update_trees_thread, trn_X_Xf, trn_Y_X, cent_mat, param, s, t, model_dir, ref(t_time), base_no ));
             s += t;
         }
     }
