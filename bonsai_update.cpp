@@ -158,6 +158,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 //assert (node->w != nullptr);
             }
         } else {
+                // classifier normalization
+                //node->w->unit_normalize_columns();
             /*
             VecI partition(node->Y.size());
             for (int j = 0; j < node->children.size(); ++ j) {
@@ -171,8 +173,6 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             delete assign_mat;
             */
         }
-        // classifier normalization
-        node->w->unit_normalize_columns();
     }
 
     cout << "leaf partition done..." << endl;
