@@ -171,6 +171,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             delete assign_mat;
             */
         }
+        // classifier normalization
+        node->w->unit_normalize_columns();
     }
 
     cout << "leaf partition done..." << endl;
