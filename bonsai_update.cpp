@@ -51,8 +51,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
     vector<Node*> &nodes = tree->nodes;
     _int max_n = max( max( max( num_X+1, num_Xf+1 ), num_Y+1 ), num_XY+1);
     mask = new _bool[ max_n ]();
+    float *node_cent = new float[cent_mat->nr];
 
-    //int num_Y = trn_Y_X->nc;
     cout << "number of labels = " << num_Y << ", base_no = " << base_no << endl;
     for (int i = base_no; i < num_Y; ++ i) {
 
@@ -65,9 +65,11 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
 
                 int maxCh = 0;
                 float maxSim = -1;
+
                 for (int ch: nodes[cur_node]->children) {
 
-                    float *node_cent = new float[cent_mat->nr];
+                    for (int j = 0; j < cent_mat->nr; ++ j) node_cent[j] = 0;
+
                     for (int lbl: nodes[ch]->Y) {
                         add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], node_cent);
                     }
@@ -79,6 +81,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                         maxSim = cos_sim;
                         maxCh = ch;
                     }
+
                 }
 
                 cur_node = maxCh;
@@ -100,27 +103,27 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
         //cout << "visit node: " << i << endl;
 
         Node *node = nodes[i];
+        //cout << "visit leaf node: " << i << endl;
+        VecI& n_Y = node->Y; // labels in node, vector of integer
+        SMatF* n_trn_X_Xf = NULL; // feature matrix in node
+        SMatF* n_trn_Y_X = NULL; // label matrix in node
+        SMatF* n_cent_mat = NULL; // centroid matrix in node
+        VecI n_X;
+        VecI n_Xf;
+        VecI n_cXf;
+
+        // slice the matrix by rows and columns
+        shrink_data_matrices_with_cent_mat( trn_X_Xf, trn_Y_X, cent_mat, n_Y, param, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, n_X, n_Xf, n_cXf );
+        //cout << "slicing matrix done..." << endl;
+
         if (node->is_leaf == true) {
-            //cout << "visit leaf node: " << i << endl;
-            VecI& n_Y = node->Y; // labels in node, vector of integer
-            SMatF* n_trn_X_Xf = NULL; // feature matrix in node
-            SMatF* n_trn_Y_X = NULL; // label matrix in node
-            SMatF* n_cent_mat = NULL; // centroid matrix in node
-            VecI n_X;
-            VecI n_Xf;
-            VecI n_cXf;
-
-            // slice the matrix by rows and columns
-            shrink_data_matrices_with_cent_mat( trn_X_Xf, trn_Y_X, cent_mat, n_Y, param, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, n_X, n_Xf, n_cXf );
-            //cout << "slicing matrix done..." << endl;
-
             if (node->Y.size() > param.num_children && i < num_nodes && node->depth + 1 < max_depth) {
                 //cout << "ready to partition leaf..." << endl;
                 node->is_leaf = false;
 
                 // split node
                 VecI partition; // partitioning starting from 0
-                split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param );
+                split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param, tree_no );
 
                 int n_effective_partitions = unordered_set<_int>(partition.begin(), partition.end()).size();
 
@@ -151,19 +154,29 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 //cout << "ready to update leaf..." << endl;
                 //update leaf classifier
                 //
-                if (node->w != nullptr) {
-                    delete node->w;
-                    node->w = nullptr;
-                }
-                train_leaf_svms(node, n_trn_X_Xf, n_trn_Y_X, num_Xf, n_Xf, param);
-                assert (node->w != nullptr);
+                train_leaf_svms( node, n_trn_X_Xf, n_trn_Y_X, num_Xf, n_Xf, param );
+                //assert (node->w != nullptr);
             }
+        } else {
+            /*
+            VecI partition(node->Y.size());
+            for (int j = 0; j < node->children.size(); ++ j) {
+                int ch = node->children[j];
+                for (int l: nodes[ch]->Y) partition[l] = j;
+            }
+            SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition );
+            //node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 1, num_Xf, n_Xf );
+            delete node->w;
+            node->w = svms(n_trn_X_Xf, assign_mat, param, 0);
+            delete assign_mat;
+            */
         }
     }
 
     cout << "leaf partition done..." << endl;
     // rearrange nodes
     sort_nodes(nodes);
+    delete node_cent;
     delete[] mask;
     cout << "nodes sorting done..." << endl;
 }

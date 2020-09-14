@@ -171,7 +171,7 @@ void normalize_d_vec( _float* dvec, _int siz )
 typedef signed char schar;
 
 //void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn)
-void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter )
+void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
   _int l = X_Xf->nc;
   _int w_size = X_Xf->nr;
@@ -198,8 +198,8 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
       alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
     }
 
-  for(i=0; i<w_size; i++)
-    w[i] = 0;
+    for(i=0; i<w_size; i++)
+        w[i] = 0;
 
   for(i=0; i<l; i++)
     {
@@ -308,7 +308,7 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
   delete [] index;
 }
 
-void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter )
+void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
   _int l = X_Xf->nc;
   _int w_size = X_Xf->nr;
@@ -343,8 +343,8 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
   for(i=0; i<l; i++)
     alpha[i] = 0;
 
-  for(i=0; i<w_size; i++)
-    w[i] = 0;
+    for(i=0; i<w_size; i++)
+        w[i] = 0;
 
   for(i=0; i<l; i++)
     {
@@ -450,7 +450,8 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
   delete [] index;
 }
 
-SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param )
+
+SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int finetune_iter, int nr, VecI &n_Xf )
 {
   _float eps = 0.1;
   //_float Cp = param.log_loss_coeff;
@@ -474,12 +475,73 @@ SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param )
   for( _int l=0; l<num_Y; l++ )
     {
       for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
-	y[ trn_Y_X->data[l][i].first ] = +1;
+        y[ trn_Y_X->data[l][i].first ] = +1;
+
+      /*
+       * initialized w
+       */
+      for (int i = 0; i < prev_w_mat->size[l]; ++ i) {
+          w[prev_w_mat->data[l][i].first] = prev_w_mat->data[l][i].second;
+      }
+
+      bool reset_w = false;
+      if( param.septype == L2R_L2LOSS_SVC )
+        solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
+      else if( param.septype == L2R_LR )
+        solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
+
+      w_mat->data[ l ] = new pairIF[ num_Xf ]();
+      _int siz = 0;
+      for( _int f=0; f<num_Xf; f++ )
+        {
+        if( fabs( w[f] ) > th )
+            w_mat->data[ l ][ siz++ ] = make_pair( f, w[f] );
+        }
+      Realloc( num_Xf, siz, w_mat->data[ l ] );
+      w_mat->size[ l ] = siz;
+
+      for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
+        y[ trn_Y_X->data[l][i].first ] = -1;
+    }
+
+  //reindex_rows( w_mat, nr, n_Xf );
+  delete prev_w_mat;
+  delete [] y;
+  delete [] w;
+
+  return w_mat;
+}
+
+SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no )
+{
+  _float eps = 0.1;
+  //_float Cp = param.log_loss_coeff;
+  //_float Cn = param.log_loss_coeff;
+  //_float f = (_float)param.num_trn / (_float)trn_X_Xf->nc;
+  _float f = 1.0;
+  _float Cp = param.log_loss_coeff * f;
+  _float Cn = param.log_loss_coeff * f;
+  _float th = param.svm_th;
+
+  _int num_Y = trn_Y_X->nc;
+  _int num_X = trn_X_Xf->nc;
+  _int num_Xf = trn_X_Xf->nr;
+
+  _int* y = new _int[ num_X ];
+  fill( y, y+num_X, -1 );
+
+  SMatF* w_mat = new SMatF( num_Xf, num_Y );
+  _float* w = new _float[ num_Xf ];
+
+  for( _int l=base_no; l<num_Y; l++ )
+    {
+      for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
+        y[ trn_Y_X->data[l][i].first ] = +1;
 
       if( param.septype == L2R_L2LOSS_SVC )
-	solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter );
+	solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
       else if( param.septype == L2R_LR )
-	solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter );
+	solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
 
       w_mat->data[ l ] = new pairIF[ num_Xf ]();
       _int siz = 0;
@@ -509,7 +571,7 @@ void reindex_rows( SMatF* mat, _int nr, VecI& rows )
   for( _int i=0; i<mat->nc; i++ )
     {
       for( _int j=0; j<mat->size[i]; j++ )
-	mat->data[i][j].first = rows[ mat->data[i][j].first ];
+        mat->data[i][j].first = rows[ mat->data[i][j].first ];
     }
 }
 
@@ -693,9 +755,26 @@ void shrink_data_matrices( SMatF* trn_X_Xf, SMatF* trn_Y_X, VecI& n_Y, Param& pa
 
 void train_leaf_svms( Node* node, SMatF* X_Xf, SMatF* Y_X, _int nr, VecI& n_Xf, Param& param )
 {
-  SMatF* w_mat = svms( X_Xf, Y_X, param );
+    int base_no = 0;
+    if (node->w != nullptr) base_no = node->w->nc;
+  SMatF* w_mat = svms( X_Xf, Y_X, param, base_no );
   reindex_rows( w_mat, nr, n_Xf );
-  node->w = w_mat;
+
+  if (base_no > 0) {
+    Realloc(node->w->nc, w_mat->nc, node->w->size);
+    Realloc(node->w->nc, w_mat->nc, node->w->data);
+    for (int i = base_no; i < w_mat->nc; ++ i) {
+      node->w->size[i] = w_mat->size[i];
+      node->w->data[i] = w_mat->data[i];
+    }
+    node->w->nc = w_mat->nc;
+  } else {
+      node->w = w_mat;
+  }
+
+  //delete[] w_mat->size;
+  //delete[] w_mat->data;
+  w_mat = nullptr;
 }
 
 ///////////////////// Modified_code_start /////////////////////
@@ -711,7 +790,7 @@ void squeeze_partition_array(vector<_int> &partition){
     partition[i] = old2new[partition[i]];
 }
 
-void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
+void kmeans( SMatF* mat, _float acc, VecI& partition, _int K, int tree_no) {
   // acc: accuracy parameter, when smaller than this, the iteration stops
   // should be epsilon
   Timer timer;
@@ -721,15 +800,20 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
   _int nr = mat->nr; // feature dim
   partition.resize( nc );
 
+  // * use random partion instead of kmeans clustering.
   /*
-   * use random partion instead of kmeans clustering.
-  random_device rd;
-  mt19937 gen(rd());
-  uniform_int_distribution<> dis(0, K-1);
+  if (tree_no == 1) {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(0, K-1);
 
-  for (int i = 0; i < nc; ++ i) partition[i] = dis(gen);
-  return ;
+    for (int i = 0; i < nc; ++ i) partition[i] = dis(gen);
+    return ;
+  }
   */
+
+  int sign = 1;
+  //if (tree_no == 2) sign = -1;
 
   vector<_int> c(K);
 
@@ -752,16 +836,17 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
   init_2d_float( K, nc, cosines );
 
 
-  _float old_cos = -10000;
+  _float old_cos = -100;
   _float new_cos = -1;
   _int best_center = 0;
   _float best_sim  = 0;
 
-  while( new_cos - old_cos >= acc ) {
+  while( sign * (new_cos - old_cos) >= acc ) {
 
     for( _int i=0; i<K; i++ ) {
-      for( _int j=0; j<nc; j++ )
-	cosines[i][j] = mult_d_s_vec( centers[i], mat->data[j], mat->size[j] ); // compute cosine sim
+      for( _int j=0; j<nc; j++ ) {
+        cosines[i][j] = mult_d_s_vec( centers[i], mat->data[j], mat->size[j] ); // compute cosine sim
+      }
     }
 
     if(KMEANS_DEBUG)
@@ -771,15 +856,30 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
     old_cos = new_cos;
     new_cos = 0;
     for( _int j=0; j<nc; j++ ) {
+        if (sign == -1) {
+            cout << "kmeanns........." << endl;
+            best_sim = cosines[0][j];
+            best_center = 0;
+            for( _int i=0; i<K; i++){
+            // cout << "cosines[i][j]=" << cosines[i][j] << endl;;
+                if(cosines[i][j] < best_sim){
+                    best_sim = cosines[i][j];
+                    best_center = i;
+                }
+            }
+        } else {
       best_sim = 0;
       best_center = 0;
       for( _int i=0; i<K; i++){
 	// cout << "cosines[i][j]=" << cosines[i][j] << endl;;
-	if(cosines[i][j] > best_sim){
-	  best_sim = cosines[i][j];
-	  best_center = i;
-	}
+        if(cosines[i][j] > best_sim){
+            best_sim = cosines[i][j];
+            best_center = i;
+        }
       }
+
+        }
+
       assert(best_center >= 0);
       assert(best_center < K);
 
@@ -864,11 +964,11 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K) {
 
 ///////////////////// Modified_code_end /////////////////////
 
-void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _int nr, VecI& n_Xf, VecI& partition, Param& param ) {
+void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _int nr, VecI& n_Xf, VecI& partition, Param& param, int tree_no ) {
   if(KMEANS_DEBUG)
     cout << "partition using KMEANS" << endl;
   // change to graph partitioning
-  kmeans( cent_mat, param.kmeans_eps, partition, param.num_children);
+  kmeans( cent_mat, param.kmeans_eps, partition, param.num_children, tree_no);
 
   // get the assignment matrix of 2 columns, whether left or right
   if(KMEANS_DEBUG){
@@ -880,7 +980,7 @@ void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _i
   if(KMEANS_DEBUG)
     cout << "partition_to_assign_mat done" << endl;
 
-  SMatF* w_mat = svms( X_Xf, assign_mat, param );
+  SMatF* w_mat = svms( X_Xf, assign_mat, param, 0 );
   reindex_rows( w_mat, nr, n_Xf );
   node->w = w_mat;
 
@@ -948,7 +1048,7 @@ Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param& param
 	  VecI partition; // partitioning starting from 0
 	  cout << "split internal node" << endl;
 
-	   split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param );
+	   split_node_kmeans( node, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, num_Xf, n_Xf, partition, param , tree_no);
 
 
 	  _int n_effective_partitions = unordered_set<_int>(partition.begin(), partition.end()).size();
