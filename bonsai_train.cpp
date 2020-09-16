@@ -108,10 +108,18 @@ int main(int argc, char* argv[])
   check_valid_filename( ft_lbl_file, true );
   SMatF* trn_X_XY = new SMatF(ft_lbl_file);
 
-  string model_dir = string( argv[4] );
+  string tst_ft_file = string( argv[4] );
+  check_valid_filename( tst_ft_file, true );
+  SMatF* tst_X_Xf = new SMatF(tst_ft_file);
+
+  string model_dir = string( argv[5] );
   check_valid_foldername( model_dir );
 
-  Param param = parse_param( argc-5, argv+5 );
+  float init_ratio = stof( argv[6]);
+  int batch_size = (int) stof( argv[7] );
+
+
+  Param param = parse_param( argc-8, argv+8 );
   param.num_Xf = trn_X_Xf->nr;
   param.num_Y = trn_X_Y->nr;
   param.write( model_dir+"/param" );
@@ -129,11 +137,20 @@ int main(int argc, char* argv[])
   cout << tmp->nc << ' ' << tmp->nr << endl;
 
   vector<int> lbl_freq(tmp->nc), lbl_idx(tmp->nc);
-  for (int i = 0; i < tmp->nc; ++ i) lbl_freq[i] = tmp->size[i];
-  for (int i = 0; i < tmp->nc; ++ i) lbl_idx[i] = i;
+
+  srand ( unsigned ( 123456 ) );
+  //srand ( unsigned ( std::time(0) ) );
+  for (int i = 0; i < tmp->nc; ++ i) {
+      lbl_idx[i] = i;
+  }
+  std::random_shuffle ( lbl_idx.begin(), lbl_idx.end() );
+
+
+  /*
   sort(begin(lbl_idx), end(lbl_idx), [&lbl_freq] (int i, int j) {
           return lbl_freq[i] > lbl_freq[j];
           });
+*/
 
   SMatF *tmp2 = new SMatF (tmp->nr, tmp->nc);
   for (int i = 0; i < tmp->nc; ++ i) {
@@ -141,15 +158,24 @@ int main(int argc, char* argv[])
       tmp2->size[i] = tmp->size[lbl_idx[i]];
   }
 
+
   // write lbl_idx to file, also used in inference
   string filename = model_dir + "/lbl_idx";
   ofstream fout(filename);
   // the important part
   for (const auto &e : lbl_idx) fout << e << "\n";
+  fout.close();
 
   tmp = tmp2;
   tmp2 = nullptr;
   cout << tmp->nc << ' ' << tmp->nr << endl;
+
+  for (int i = 0; i < tmp->nc; ++ i) lbl_freq[i] = tmp->size[i];
+  for (int i = 0; i < tmp->nc; ++ i) {
+      cout << lbl_freq[i] << endl;
+      if (i == tmp->nc / 2) cout << "===============================" << endl;
+  }
+
 
   cout << "label sorting done..." << endl;
   // slicing part of
@@ -157,9 +183,11 @@ int main(int argc, char* argv[])
   _float train_time;
   bool init = true;
   int base_no = 0;
-  int batch_size = 1000;
+  int batch_idx = 0;
 
-  for (int i = int(0.5 * num_lbl); ; i += batch_size) {
+  param.beam_size = 10;
+
+  for (int i = int(init_ratio * num_lbl); ; i += batch_size) {
       if (i == num_lbl + batch_size) break;
 
       i = min(i, num_lbl);
@@ -173,6 +201,18 @@ int main(int argc, char* argv[])
       } else {
         update_trees( trn_X_Xf, trn_X_Y, trn_X_XY, param, model_dir, train_time, base_no );
       }
+      // batch prediction
+      // get predictions of labels in range [base_no, i)
+      float prediction_time = 0, model_size = 0;
+      SMatF* score_mat = predict_trees(tst_X_Xf, param, model_dir, prediction_time, model_size, base_no, i);
+      // save predictions
+      string score_file = model_dir + "/score_mat_init_ratio_" + to_string(int(init_ratio * 100)) + "_batch_size_" + to_string(batch_size) + "_" + to_string(batch_idx);
+      //check_valid_foldername( score_file );
+      score_mat->write(score_file);
+      delete score_mat;
+      //ofstream fout;
+      //fout.open(model_dir + "/" + to_string(ratio) + "_" + to_string(batch_size) + to_string(batch_idx));
+      ++ batch_idx;
       //if (init) ++ param.max_depth;
       init = false;
       base_no = i;

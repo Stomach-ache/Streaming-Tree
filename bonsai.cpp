@@ -484,7 +484,7 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
           w[prev_w_mat->data[l][i].first] = prev_w_mat->data[l][i].second;
       }
 
-      bool reset_w = false;
+      bool reset_w = true;
       if( param.septype == L2R_L2LOSS_SVC )
         solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
       else if( param.septype == L2R_LR )
@@ -530,7 +530,7 @@ SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no )
   _int* y = new _int[ num_X ];
   fill( y, y+num_X, -1 );
 
-  SMatF* w_mat = new SMatF( num_Xf, num_Y );
+  SMatF* w_mat = new SMatF( num_Xf, num_Y - base_no );
   _float* w = new _float[ num_Xf ];
 
   for( _int l=base_no; l<num_Y; l++ )
@@ -539,22 +539,22 @@ SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no )
         y[ trn_Y_X->data[l][i].first ] = +1;
 
       if( param.septype == L2R_L2LOSS_SVC )
-	solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
+        solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
       else if( param.septype == L2R_LR )
-	solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
+        solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
 
-      w_mat->data[ l ] = new pairIF[ num_Xf ]();
+      w_mat->data[ l - base_no ] = new pairIF[ num_Xf ]();
       _int siz = 0;
       for( _int f=0; f<num_Xf; f++ )
 	{
 	  if( fabs( w[f] ) > th )
-	    w_mat->data[ l ][ siz++ ] = make_pair( f, w[f] );
+	    w_mat->data[ l - base_no ][ siz++ ] = make_pair( f, w[f] );
 	}
-      Realloc( num_Xf, siz, w_mat->data[ l ] );
-      w_mat->size[ l ] = siz;
+      Realloc( num_Xf, siz, w_mat->data[ l - base_no ] );
+      w_mat->size[ l - base_no ] = siz;
 
       for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
-	y[ trn_Y_X->data[l][i].first ] = -1;
+        y[ trn_Y_X->data[l][i].first ] = -1;
     }
 
   delete [] y;
@@ -757,17 +757,17 @@ void train_leaf_svms( Node* node, SMatF* X_Xf, SMatF* Y_X, _int nr, VecI& n_Xf, 
 {
     int base_no = 0;
     if (node->w != nullptr) base_no = node->w->nc;
-  SMatF* w_mat = svms( X_Xf, Y_X, param, base_no );
-  reindex_rows( w_mat, nr, n_Xf );
+    SMatF* w_mat = svms( X_Xf, Y_X, param, base_no );
+    reindex_rows( w_mat, nr, n_Xf );
 
   if (base_no > 0) {
-    Realloc(node->w->nc, w_mat->nc, node->w->size);
-    Realloc(node->w->nc, w_mat->nc, node->w->data);
-    for (int i = base_no; i < w_mat->nc; ++ i) {
-      node->w->size[i] = w_mat->size[i];
-      node->w->data[i] = w_mat->data[i];
+    Realloc(base_no, base_no + w_mat->nc, node->w->size);
+    Realloc(base_no, base_no + w_mat->nc, node->w->data);
+    for (int i = base_no; i < base_no + w_mat->nc; ++ i) {
+      node->w->size[i] = w_mat->size[i - base_no];
+      node->w->data[i] = w_mat->data[i - base_no];
     }
-    node->w->nc = w_mat->nc;
+    node->w->nc += w_mat->nc;
   } else {
       node->w = w_mat;
   }
@@ -1090,6 +1090,13 @@ Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param& param
 
 	  for(vector<_int>  child_labels: labels_by_child) {
 	    Node* child_node = new Node( child_labels, node->depth+1, max_depth );
+        /*
+        child_node->Y_cent.resize(cent_mat->nr);
+        for (int ch: child_labels) {
+            add_s_to_d_vec(cent_mat->data[ch], cent_mat->size[ch], &child_node->Y_cent[0]);
+        }
+        */
+        //normalize_d_vec(&child_node->Y_cent[0], child_node->Y_cent.size());
 
 	    // when not enough labels to partition, make it a leaf
 	    if(child_labels.size() <= param.num_children)
@@ -1253,7 +1260,7 @@ void train_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param
 }
 
 thread_local float* densew;
-void update_svm_scores( Node* node, SMatF* tst_X_Xf, SMatF* score_mat, SMatI* id_type_mat, _float discount, _Septype septype ) {
+void update_svm_scores( Node* node, SMatF* tst_X_Xf, SMatF* score_mat, SMatI* id_type_mat, _float discount, _Septype septype, int lft, int rgt ) {
   SMatF* w_mat = node->w;
 
   // number of SVM classifiers?
@@ -1289,9 +1296,13 @@ void update_svm_scores( Node* node, SMatF* tst_X_Xf, SMatF* score_mat, SMatI* id
 	newvalue += discount * oldvalue; // ??? what's `discount`?
 
 	// update the "child" or "label"'s score
-	score_mat->data[ inst ][ score_mat->size[ inst ]++ ] = make_pair( target, newvalue );
-	id_type_mat->data[ inst ][ id_type_mat->size[ inst ]++ ] = make_pair( target, id_type );
+        if (id_type == -1 && (target < lft || target >= rgt)) {
+        } else {
+            score_mat->data[ inst ][ score_mat->size[ inst ]++ ] = make_pair( target, newvalue );
+            id_type_mat->data[ inst ][ id_type_mat->size[ inst ]++ ] = make_pair( target, id_type );
+        }
     }
+
     reset_d_with_s( w_mat->data[i], w_mat->size[i], densew );
   }
 }
@@ -1404,7 +1415,7 @@ void exponentiate_scores( SMatF* mat )
 
 ///////////////////// Modified_code_start /////////////////////
 
-SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param )
+SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param, int lft, int rgt )
 {
   _int num_X = tst_X_Xf->nc; //  number of test points
   _int num_Y = param.num_Y;  //  number of labels
@@ -1469,7 +1480,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param )
 
     if(PD_DEBUG)
       cout << "at node " << i << ", depth " << node->depth << " #test instances "<< node->X.size() << " #labels " << node->Y.size() << ", is_leaf " << node->is_leaf << endl;
-    update_svm_scores( node, tst_X_Xf, score_mat, id_type_mat, param.discount, param.septype );
+    update_svm_scores( node, tst_X_Xf, score_mat, id_type_mat, param.discount, param.septype, lft, rgt );
 
     if(PD_DEBUG)
       cout << "update_svm_scores done" << endl;
@@ -1494,7 +1505,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param )
 
 ///////////////////// Modified_code_end /////////////////////
 
-void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int s, _int t, string model_dir, _float* prediction_time, _float* model_size ) {
+void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int s, _int t, string model_dir, _float* prediction_time, _float* model_size, int lft, int rgt ) {
   Timer timer;
 
   timer.start();
@@ -1509,7 +1520,7 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
 
     cout << "predict starts..." << endl;
     timer.resume();
-    SMatF* tree_score_mat = predict_tree( tst_X_Xf, tree, param );
+    SMatF* tree_score_mat = predict_tree( tst_X_Xf, tree, param, lft, rgt );
     cout << "predict done..." << endl;
 
     {
@@ -1535,7 +1546,7 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
   }
 }
 
-SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& prediction_time, _float& model_size ) {
+SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& prediction_time, _float& model_size, int lft, int rgt ) {
   _float* p_time = new _float;
   *p_time = 0;
 
@@ -1562,7 +1573,7 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
       if( s < param.start_tree+param.num_tree )
 	{
 	  _int t = min(tree_per_thread, param.start_tree+param.num_tree-s);
-	  threads.push_back( thread( predict_trees_thread, tst_X_Xf, ref(score_mat), param, s, t, model_dir, ref( p_time ), ref( m_size ) ));
+	  threads.push_back( thread( predict_trees_thread, tst_X_Xf, ref(score_mat), param, s, t, model_dir, ref( p_time ), ref( m_size ), lft, rgt ));
 	  s += t;
 	}
     }
@@ -1583,14 +1594,21 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
   model_size = *m_size;
   delete m_size;
 
+
   ifstream fin(model_dir + "/lbl_idx");
   vector<int> lbl_idx;
   int v;
   while (fin >> v) lbl_idx.push_back(v);
+  fin.close();
+  //cout << "=======size of lbl_idx: " << lbl_idx << endl;
 
   for (int i = 0; i < score_mat->nc; ++ i) {
       for (int j = 0; j < score_mat->size[i]; ++ j) {
+          assert (score_mat->data[i][j].first < num_Y);
+          if (score_mat->data[i][j].first < lft || score_mat->data[i][j].first >= rgt)
+              score_mat->data[i][j].second = -1;
           score_mat->data[i][j].first = lbl_idx[score_mat->data[i][j].first];
+          assert (score_mat->data[i][j].first < num_Y);
       }
   }
 
@@ -1598,7 +1616,7 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
     {
       _int siz = score_mat->size[i]; // number of labels with scores
       sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
-      _int newsiz = min( siz, 100 ); // report the top 100?
+      _int newsiz = min( siz, 10 ); // report the top 100?
       Realloc( siz, newsiz, score_mat->data[i] );
       score_mat->size[i] = newsiz;
       sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id

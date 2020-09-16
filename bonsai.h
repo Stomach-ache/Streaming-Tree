@@ -62,6 +62,7 @@ class Node
   _int neg_child;
   _int depth;
   VecI Y;
+  VecF Y_cent;
   SMatF* w;
   VecIF X; // store the instance ids to predict (for test data), (id, score)
 
@@ -93,6 +94,7 @@ class Node
     _float ram = 0;
     ram += sizeof( Node );
     ram += sizeof( _int ) * Y.capacity();
+    ram += sizeof(_float) * Y_cent.capacity();
     ram += w->get_ram();
     return ram;
   }
@@ -113,6 +115,11 @@ class Node
     fout << node.Y.size();
     for( _int i=0; i<node.Y.size(); i++ )
       fout << " " << node.Y[i];
+    fout << "\n";
+
+    fout << node.Y_cent.size();
+    for( _int i=0; i<node.Y_cent.size(); i++ )
+      fout << " " << node.Y_cent[i];
     fout << "\n";
 
     assert (node.w != nullptr);
@@ -156,6 +163,13 @@ class Node
 
     for( _int i=0; i<Y_size; i++ )
       fin >> node.Y[i];
+
+    _int Y_cent_size;
+    fin >> Y_cent_size;
+    node.Y_cent.resize( Y_cent_size );
+
+    for( _int i=0; i<Y_cent_size; i++ )
+      fin >> node.Y_cent[i];
 
     node.w = new SMatF;
     fin >> (*node.w);
@@ -376,8 +390,8 @@ void train_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param
 
 void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param, string model_dir, _float& train_time, int base_no );
 
-SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param );
-SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& prediction_time, _float& model_size );
+SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& parami, int lft, int rgt );
+SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& prediction_time, _float& model_size, int lft, int rgt );
 
 
 extern mutex mtx;

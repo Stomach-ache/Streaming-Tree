@@ -61,6 +61,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
 
         while  (true) {
             nodes[cur_node]->Y.push_back(i);
+
             if (nodes[cur_node]->is_leaf == false) {
 
                 int maxCh = 0;
@@ -68,13 +69,18 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
 
                 for (int ch: nodes[cur_node]->children) {
 
-                    for (int j = 0; j < cent_mat->nr; ++ j) node_cent[j] = 0;
+                    if (nodes[ch]->Y_cent.empty() == true) {
+                        nodes[ch]->Y_cent.resize(cent_mat->nr);
+                        for (int j = 0; j < cent_mat->nr; ++ j) nodes[ch]->Y_cent[j] = 0;
 
-                    for (int lbl: nodes[ch]->Y) {
-                        add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], node_cent);
+                        for (int lbl: nodes[ch]->Y) {
+                            add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], &nodes[ch]->Y_cent[0]);
+                        }
+                    } else {
                     }
-                    normalize_d_vec(node_cent, cent_mat->nr);
 
+                    for (int j = 0; j < cent_mat->nr; ++ j) node_cent[j] = nodes[ch]->Y_cent[j];
+                    normalize_d_vec(node_cent, cent_mat->nr);
                     float cos_sim = mult_d_s_vec(node_cent, cent_mat->data[i], cent_mat->size[i]);
                     //cout << "child = " << ch << " cos_sim = " << cos_sim << endl;
                     if (cos_sim > maxSim) {
@@ -99,6 +105,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
     int num_nodes = nodes.size();
     int tmp_num_nodes = num_nodes;
     _int max_depth = param.max_depth;
+
     for (int i = 0; i < tmp_num_nodes; ++ i) {
         //cout << "visit node: " << i << endl;
 
@@ -113,8 +120,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
         VecI n_cXf;
 
         // slice the matrix by rows and columns
-        shrink_data_matrices_with_cent_mat( trn_X_Xf, trn_Y_X, cent_mat, n_Y, param, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, n_X, n_Xf, n_cXf );
         //cout << "slicing matrix done..." << endl;
+        shrink_data_matrices_with_cent_mat( trn_X_Xf, trn_Y_X, cent_mat, n_Y, param, n_trn_X_Xf, n_trn_Y_X, n_cent_mat, n_X, n_Xf, n_cXf );
 
         if (node->is_leaf == true) {
             if (node->Y.size() > param.num_children && i < num_nodes && node->depth + 1 < max_depth) {
@@ -154,6 +161,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 //cout << "ready to update leaf..." << endl;
                 //update leaf classifier
                 //
+                //delete node->w;
+                //node->w = nullptr;
                 train_leaf_svms( node, n_trn_X_Xf, n_trn_Y_X, num_Xf, n_Xf, param );
                 //assert (node->w != nullptr);
             }
@@ -173,6 +182,11 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             delete assign_mat;
             */
         }
+
+
+        delete n_trn_X_Xf;
+        delete n_trn_Y_X;
+        delete n_cent_mat;
     }
 
     cout << "leaf partition done..." << endl;

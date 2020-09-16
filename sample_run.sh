@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#dataset="wiki10"
 dataset="eurlex"
 data_dir="../sandbox/data/$dataset"
 results_dir="../sandbox/results/$dataset"
@@ -11,6 +12,8 @@ trn_ft_lbl_file="${data_dir}/trn_X_XY.txt"
 tst_ft_file="${data_dir}/tst_X_Xf.txt"
 tst_lbl_file="${data_dir}/tst_X_Y.txt"
 score_file="${results_dir}/score_mat.txt"
+init_ratio=0.5
+batch_size=1000
 
 mkdir -p $model_dir
 
@@ -20,7 +23,7 @@ mkdir -p $model_dir
 # NOTE: The usage of Bonsai for other datasets requires setting parameter `-m` to 2 for smaller datasets like EUR-Lex, Wikipedia-31K 
 #       and to 3 for larger datasets like Delicious-200K, WikiLSHTC-325K, Amazon-670K, Wikipedia-500K, Amazon-3M.
 
-./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $model_dir \
+./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
     -T 3 \
     -s 0 \
     -t 3 \
@@ -47,4 +50,4 @@ mkdir -p $model_dir
 
 # performance evaluation 
 #matlab -nodesktop -nodisplay -r "cd('$PWD'); addpath(genpath('../tools')); trn_X_Y = read_text_mat('$trn_lbl_file'); tst_X_Y = read_text_mat('$tst_lbl_file'); wts = inv_propensity(trn_X_Y,0.55,1.5); score_mat = read_text_mat('$score_file'); get_all_metrics(score_mat, tst_X_Y, wts); exit;"
-python get_all_metrics.py -Ytr $trn_lbl_file -Yte $tst_lbl_file -d $dataset -sc $score_file
+python get_all_metrics.py -Ytr $trn_lbl_file -Yte $tst_lbl_file -d $dataset -sc $score_file -ir $init_ratio -bs $batch_size -md $model_dir

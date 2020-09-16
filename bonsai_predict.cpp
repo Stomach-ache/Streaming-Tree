@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
   Param param = parse_param(argc-4, argv+4, model_dir);
 
   _float prediction_time, model_size;
-  SMatF* score_mat = predict_trees( tst_X_Xf, param, model_dir, prediction_time, model_size );
+  SMatF* score_mat = predict_trees( tst_X_Xf, param, model_dir, prediction_time, model_size, 0, int(1e9) );
 
   cout << "prediction time: " << 1000*(prediction_time/tst_X_Xf->nc) << " ms" << endl;
   cout << "model size: " << model_size/1e+6 << " mb" << endl;

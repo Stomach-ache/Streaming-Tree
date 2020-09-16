@@ -15,7 +15,16 @@ parser.add_argument('--tstYfile', '-Yte', metavar='MAX_DEPTH', type=str,
                                                help='set max depth of trees')
 parser.add_argument('--score', '-sc', metavar='MAX_DEPTH', type=str,
                                                help='set max depth of trees')
+parser.add_argument('--model_dir', '-md', metavar='MODEL_DIR', type=str,
+                                               help='model dir to read predictions')
+parser.add_argument('--batch_size', '-bs', metavar='BATCH_SIZE', type=int,
+                                               help='set batch_size in streaming label learning')
+parser.add_argument('--init_ratio', '-ir', metavar='INIT_RATIO', type=float,
+                                               help='set initial ratio of labels for pretraining')
+
+
 args = parser.parse_args()
+
 
 def csr2list(M):
     row, col, _ = find(M)
@@ -23,6 +32,7 @@ def csr2list(M):
     for r, c in zip(row, col):
         res[r].append(c)
     return res
+
 
 Ytr = data_utils.read_sparse_file(args.trnYfile, force_header=True)
 Yte = data_utils.read_sparse_file(args.tstYfile, force_header=True)
@@ -63,6 +73,59 @@ print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, 
 print('PSPrecision@1,3,5:', get_psp_1(res, targets, inv_w, mlb), get_psp_3(res, targets, inv_w, mlb), get_psp_5(res, targets, inv_w, mlb))
 print('PSnDCG@1,3,5:', get_psndcg_1(res, targets, inv_w, mlb), get_psndcg_3(res, targets, inv_w, mlb), get_psndcg_5(res, targets, inv_w, mlb))
 
+
+'''
+with open(args.model_dir + '/lbl_idx', 'r') as fp:
+    lbl_idx = map(int, fp.readlines())
+print (lbl_idx)
+'''
+
+num_label = Yte.shape[1]
+base_no = int(args.init_ratio * num_label)
+batch_idx = 0
+batch_size = args.batch_size
+j = 0
+while j <= num_label:
+    print ("===============")
+    score_file = args.model_dir + "/score_mat_init_ratio_" + str(int(args.init_ratio * 100)) + "_batch_size_" + str(batch_size) + "_" + str(batch_idx)
+    print (score_file)
+    prob = data_utils.read_sparse_file(score_file, force_header=True)
+
+    print (prob.shape)
+
+    for i in range(num_sample):
+        y = np.argsort(prob[i].data)[-topk:][::-1]
+        if len(y) < topk:
+            y = np.array(list(y) + [i] * (topk-len(y)))
+        res[i] = prob[i].indices[y]
+        '''
+        rgt = base_no
+        if j > 0:
+            rgt = min(num_label, j + batch_size)
+
+        cc = 0
+        for k in y:
+            if prob[i].indices[k] < j or prob[i].indices[k] >= rgt:
+                continue
+            res[i][cc] = prob[i].indices[k]
+            cc += 1
+            if cc >= topk:
+                break
+        '''
+
+
+    print (res[0])
+    print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
+    print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
+
+    if batch_idx == 0:
+        j += base_no
+    else:
+        j += batch_size
+    batch_idx += 1
+
+
+'''
 print ('=======re-ranking============')
 for i in range(num_sample):
     y = np.argsort(prob[i].data * inv_w[prob[i].indices])[-topk:][::-1]
@@ -74,6 +137,7 @@ print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, ml
 print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
 print('PSPrecision@1,3,5:', get_psp_1(res, targets, inv_w, mlb), get_psp_3(res, targets, inv_w, mlb), get_psp_5(res, targets, inv_w, mlb))
 print('PSnDCG@1,3,5:', get_psndcg_1(res, targets, inv_w, mlb), get_psndcg_3(res, targets, inv_w, mlb), get_psndcg_5(res, targets, inv_w, mlb))
+'''
 '''
 results = open('./results/' + dataset, 'w')
 
