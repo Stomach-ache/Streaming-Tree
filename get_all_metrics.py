@@ -91,7 +91,7 @@ while j <= num_label:
     print (score_file)
     prob = data_utils.read_sparse_file(score_file, force_header=True)
 
-    print (prob.shape)
+    #print (prob.shape)
 
     for i in range(num_sample):
         y = np.argsort(prob[i].data)[-topk:][::-1]

@@ -53,7 +53,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
     mask = new _bool[ max_n ]();
     float *node_cent = new float[cent_mat->nr];
 
-    cout << "number of labels = " << num_Y << ", base_no = " << base_no << endl;
+    //cout << "number of labels = " << num_Y << ", base_no = " << base_no << endl;
     for (int i = base_no; i < num_Y; ++ i) {
 
         // root
@@ -169,7 +169,6 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
         } else {
                 // classifier normalization
                 //node->w->unit_normalize_columns();
-            /*
             VecI partition(node->Y.size());
             for (int j = 0; j < node->children.size(); ++ j) {
                 int ch = node->children[j];
@@ -180,7 +179,6 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             delete node->w;
             node->w = svms(n_trn_X_Xf, assign_mat, param, 0);
             delete assign_mat;
-            */
         }
 
 
@@ -189,12 +187,12 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
         delete n_cent_mat;
     }
 
-    cout << "leaf partition done..." << endl;
+    //cout << "leaf partition done..." << endl;
     // rearrange nodes
     sort_nodes(nodes);
     delete node_cent;
     delete[] mask;
-    cout << "nodes sorting done..." << endl;
+    //cout << "nodes sorting done..." << endl;
 }
 
 void update_trees_thread( SMatF* trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Param param, _int s, _int t, string model_dir, _float *train_time, int base_no) {

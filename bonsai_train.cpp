@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 
   vector<int> lbl_freq(tmp->nc), lbl_idx(tmp->nc);
 
-  srand ( unsigned ( 123456 ) );
+  srand ( unsigned ( 95 ) );
   //srand ( unsigned ( std::time(0) ) );
   for (int i = 0; i < tmp->nc; ++ i) {
       lbl_idx[i] = i;
