@@ -138,12 +138,14 @@ int main(int argc, char* argv[])
 
   vector<int> lbl_freq(tmp->nc), lbl_idx(tmp->nc);
 
-  srand ( unsigned ( 95 ) );
+  //std::srand ( unsigned ( 95 ) );
   //srand ( unsigned ( std::time(0) ) );
+  ifstream fin(model_dir + "/lbl_idx");
   for (int i = 0; i < tmp->nc; ++ i) {
-      lbl_idx[i] = i;
+      fin >> lbl_idx[i];
   }
-  std::random_shuffle ( lbl_idx.begin(), lbl_idx.end() );
+  fin.close();
+// std::random_shuffle ( lbl_idx.begin(), lbl_idx.end() );
 
 
   /*
@@ -158,13 +160,14 @@ int main(int argc, char* argv[])
       tmp2->size[i] = tmp->size[lbl_idx[i]];
   }
 
-
+  /*
   // write lbl_idx to file, also used in inference
   string filename = model_dir + "/lbl_idx";
   ofstream fout(filename);
   // the important part
   for (const auto &e : lbl_idx) fout << e << "\n";
   fout.close();
+  */
 
   tmp = tmp2;
   tmp2 = nullptr;
