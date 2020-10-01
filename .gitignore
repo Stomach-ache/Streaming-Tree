@@ -33,5 +33,6 @@
 
 # python cache
 __pycache__/
+log_*
 
 
