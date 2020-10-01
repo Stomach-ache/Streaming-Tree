@@ -1,0 +1,528 @@
+start label sorting...
+matrix transpose done...
+30938 14146
+label sorting done...
+start training using labels from 0 to 15469
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 2 training started
+tree 1 training started
+tree 2 training started
+node 0
+node 0
+node 0
+node 0
+split internal noderted
+tree 1 trainin
+split internal noderted
+tree 1 trainin
+split internal node
+time spent on kmeans: 87.2885 secs
+time spent on kmeans: 91.1294 secs
+n_effective_partitions=100
+train leaf node 1 with 39 labels
+train leaf node 2 with 65 labels
+train leaf node 3 with 61 labels
+train leaf node 4 with 33 labels
+train leaf node 5 with 92 labels
+train leaf node 6 with 78 labels
+train leaf node 7 with 64 labels
+train leaf node 8 with 27 labels
+train leaf node 9 with 31 labels
+train leaf node 10 with 36 labels
+train leaf node 11 with 39 labels
+train leaf node 12 with 28 labels
+train leaf node 13 with 153 labels
+train leaf node 14 with 119 labels
+train leaf node 15 with 127 labels
+train leaf node 16 with 82 labels
+train leaf node 17 with 29 labels
+train leaf node 18 with 39 labels
+train leaf node 19 with 126 labels
+train leaf node 20 with 105 labels
+train leaf node 21 with 34 labels
+train leaf node 22 with 172 labels
+n_effective_partitions=97
+train leaf node 1 with 16 labels
+train leaf node 2 with 50 labels
+train leaf node 3 with 23 labels
+train leaf node 4 with 53 labels
+train leaf node 5 with 40 labels
+train leaf node 6 with 31 labels
+train leaf node 7 with 36 labels
+train leaf node 8 with 30 labels
+train leaf node 9 with 87 labels
+train leaf node 23 with 121 labels
+train leaf node 10 with 127 labels
+train leaf node 11 with 84 labels
+train leaf node 12 with 30 labels
+train leaf node 13 with 106 labels
+train leaf node 24 with 77 labels
+train leaf node 14 with 54 labels
+train leaf node 15 with 20 labels
+train leaf node 16 with 49 labels
+train leaf node 25 with 72 labels
+train leaf node 17 with 24 labels
+train leaf node 18 with 87 labels
+train leaf node 26 with 68 labels
+train leaf node 27 with 161 labels
+train leaf node 19 with 28 labels
+train leaf node 20 with 124 labels
+train leaf node 28 with 225 labels
+train leaf node 21 with 97 labels
+train leaf node 22 with 32 labels
+train leaf node 23 with 186 labels
+train leaf node 24 with 162 labels
+train leaf node 29 with 184 labels
+train leaf node 25 with 173 labels
+train leaf node 26 with 41 labels
+train leaf node 27 with 72 labels
+train leaf node 28 with 24 labels
+train leaf node 29 with 86 labels
+train leaf node 30 with 195 labels
+train leaf node 30 with 78 labels
+train leaf node 31 with 130 labels
+train leaf node 32 with 58 labels
+train leaf node 33 with 80 labels
+train leaf node 34 with 73 labels
+train leaf node 35 with 163 labels
+train leaf node 31 with 46 labels
+train leaf node 32 with 61 labels
+train leaf node 33 with 64 labels
+train leaf node 34 with 228 labels
+train leaf node 36 with 54 labels
+train leaf node 37 with 89 labels
+train leaf node 38 with 132 labels
+train leaf node 35 with 109 labels
+train leaf node 39 with 72 labels
+train leaf node 40 with 180 labels
+train leaf node 36 with 63 labels
+train leaf node 37 with 122 labels
+train leaf node 38 with 65 labels
+train leaf node 39 with 177 labels
+train leaf node 41 with 169 labels
+train leaf node 40 with 65 labels
+train leaf node 41 with 173 labels
+train leaf node 42 with 343 labels
+train leaf node 42 with 160 labels
+train leaf node 43 with 147 labels
+train leaf node 44 with 41 labels
+train leaf node 45 with 298 labels
+train leaf node 46 with 100 labels
+train leaf node 47 with 325 labels
+time spent on kmeans: 137.393 secs
+train leaf node 43 with 144 labels
+train leaf node 44 with 67 labels
+train leaf node 45 with 128 labels
+train leaf node 46 with 290 labels
+train leaf node 47 with 47 labels
+train leaf node 48 with 158 labels
+train leaf node 49 with 153 labels
+train leaf node 50 with 110 labels
+train leaf node 48 with 200 labels
+train leaf node 51 with 262 labels
+train leaf node 49 with 129 labels
+train leaf node 50 with 202 labels
+train leaf node 51 with 106 labels
+train leaf node 52 with 196 labels
+train leaf node 52 with 147 labels
+train leaf node 53 with 106 labels
+train leaf node 53 with 409 labels
+train leaf node 54 with 111 labels
+train leaf node 55 with 43 labels
+train leaf node 56 with 206 labels
+train leaf node 57 with 74 labels
+train leaf node 58 with 205 labels
+train leaf node 59 with 190 labels
+train leaf node 60 with 74 labels
+train leaf node 61 with 81 labels
+train leaf node 62 with 147 labels
+train leaf node 63 with 260 labels
+train leaf node 54 with 71 labels
+train leaf node 55 with 96 labels
+train leaf node 56 with 68 labels
+train leaf node 57 with 206 labels
+train leaf node 64 with 138 labels
+train leaf node 58 with 66 labels
+train leaf node 59 with 148 labels
+train leaf node 65 with 314 labels
+train leaf node 60 with 48 labels
+train leaf node 61 with 48 labels
+train leaf node 62 with 61 labels
+train leaf node 63 with 89 labels
+train leaf node 64 with 57 labels
+train leaf node 65 with 165 labels
+train leaf node 66 with 185 labels
+train leaf node 66 with 235 labels
+train leaf node 67 with 415 labels
+train leaf node 67 with 213 labels
+n_effective_partitions=95
+train leaf node 1 with 14 labels
+train leaf node 2 with 19 labels
+train leaf node 3 with 23 labels
+train leaf node 4 with 26 labels
+train leaf node 5 with 36 labels
+train leaf node 6 with 32 labels
+train leaf node 7 with 43 labels
+train leaf node 8 with 69 labels
+train leaf node 9 with 159 labels
+train leaf node 68 with 191 labels
+train leaf node 10 with 95 labels
+train leaf node 11 with 37 labels
+train leaf node 12 with 56 labels
+train leaf node 13 with 57 labels
+train leaf node 14 with 62 labels
+train leaf node 15 with 46 labels
+train leaf node 16 with 43 labels
+train leaf node 17 with 82 labels
+train leaf node 69 with 268 labels
+train leaf node 18 with 47 labels
+train leaf node 19 with 148 labels
+train leaf node 20 with 81 labels
+train leaf node 21 with 60 labels
+train leaf node 22 with 31 labels
+train leaf node 23 with 151 labels
+train leaf node 24 with 33 labels
+train leaf node 25 with 72 labels
+train leaf node 26 with 215 labels
+train leaf node 70 with 136 labels
+train leaf node 71 with 280 labels
+train leaf node 27 with 24 labels
+train leaf node 28 with 182 labels
+train leaf node 29 with 225 labels
+train leaf node 68 with 241 labels
+train leaf node 72 with 88 labels
+train leaf node 30 with 73 labels
+train leaf node 69 with 845 labels
+train leaf node 73 with 263 labels
+train leaf node 31 with 144 labels
+train leaf node 32 with 336 labels
+train leaf node 74 with 452 labels
+train leaf node 33 with 183 labels
+train leaf node 34 with 101 labels
+train leaf node 35 with 104 labels
+train leaf node 36 with 251 labels
+train leaf node 37 with 201 labels
+train leaf node 75 with 152 labels
+train leaf node 76 with 79 labels
+train leaf node 77 with 128 labels
+train leaf node 38 with 60 labels
+train leaf node 39 with 240 labels
+train leaf node 78 with 603 labels
+train leaf node 40 with 90 labels
+train leaf node 41 with 115 labels
+train leaf node 42 with 220 labels
+train leaf node 43 with 245 labels
+train leaf node 44 with 152 labels
+train leaf node 45 with 67 labels
+train leaf node 46 with 541 labels
+train leaf node 47 with 28 labels
+train leaf node 48 with 232 labels
+train leaf node 49 with 133 labels
+train leaf node 50 with 220 labels
+train leaf node 51 with 76 labels
+train leaf node 52 with 107 labels
+train leaf node 53 with 42 labels
+train leaf node 54 with 109 labels
+train leaf node 55 with 129 labels
+train leaf node 56 with 114 labels
+train leaf node 57 with 132 labels
+train leaf node 58 with 31 labels
+train leaf node 59 with 125 labels
+train leaf node 60 with 172 labels
+train leaf node 61 with 256 labels
+train leaf node 62 with 173 labels
+train leaf node 63 with 200 labels
+train leaf node 64 with 165 labels
+train leaf node 65 with 519 labels
+train leaf node 79 with 97 labels
+train leaf node 80 with 197 labels
+train leaf node 81 with 290 labels
+train leaf node 82 with 135 labels
+train leaf node 83 with 185 labels
+train leaf node 84 with 211 labels
+train leaf node 85 with 344 labels
+train leaf node 86 with 84 labels
+train leaf node 87 with 510 labels
+train leaf node 66 with 226 labels
+train leaf node 67 with 127 labels
+train leaf node 68 with 274 labels
+train leaf node 88 with 83 labels
+train leaf node 89 with 183 labels
+train leaf node 90 with 651 labels
+train leaf node 91 with 77 labels
+train leaf node 92 with 162 labels
+train leaf node 69 with 103 labels
+train leaf node 70 with 312 labels
+train leaf node 93 with 380 labels
+train leaf node 71 with 77 labels
+train leaf node 72 with 201 labels
+train leaf node 73 with 176 labels
+train leaf node 74 with 173 labels
+train leaf node 75 with 195 labels
+train leaf node 76 with 103 labels
+train leaf node 77 with 60 labels
+train leaf node 78 with 170 labels
+train leaf node 79 with 77 labels
+train leaf node 80 with 311 labels
+train leaf node 94 with 1189 labels
+train leaf node 81 with 88 labels
+train leaf node 82 with 256 labels
+train leaf node 83 with 362 labels
+train leaf node 84 with 103 labels
+train leaf node 85 with 474 labels
+train leaf node 70 with 83 labels
+train leaf node 71 with 35 labels
+train leaf node 72 with 112 labels
+train leaf node 73 with 229 labels
+train leaf node 74 with 102 labels
+train leaf node 75 with 317 labels
+train leaf node 86 with 94 labels
+train leaf node 87 with 382 labels
+train leaf node 76 with 121 labels
+train leaf node 77 with 288 labels
+train leaf node 78 with 174 labels
+train leaf node 79 with 90 labels
+train leaf node 80 with 176 labels
+train leaf node 88 with 176 labels
+train leaf node 89 with 780 labels
+train leaf node 81 with 103 labels
+train leaf node 82 with 198 labels
+train leaf node 83 with 121 labels
+train leaf node 84 with 61 labels
+train leaf node 85 with 78 labels
+train leaf node 86 with 93 labels
+train leaf node 87 with 236 labels
+train leaf node 90 with 113 labels
+train leaf node 91 with 115 labels
+train leaf node 88 with 204 labels
+train leaf node 92 with 240 labels
+train leaf node 89 with 296 labels
+train leaf node 93 with 222 labels
+train leaf node 90 with 327 labels
+train leaf node 94 with 928 labels
+train leaf node 91 with 130 labels
+train leaf node 92 with 821 labels
+train leaf node 93 with 86 labels
+train leaf node 94 with 31 labels
+train leaf node 95 with 265 labels
+train leaf node 96 with 326 labels
+train leaf node 97 with 372 labels
+train leaf node 98 with 191 labels
+train leaf node 99 with 64 labels
+node 100
+train leaf node 100 with 490 labels
+tree 2 training completed
+train leaf node 95 with 297 labels
+tree 0 training completed
+train leaf node 95 with 316 labels
+train leaf node 96 with 62 labels
+train leaf node 97 with 449 labels
+tree 1 training completed
+tree 0 predicting started
+tree 0 predicting started
+tree 1 predicting started
+tree 0 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+6616 101
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+6616 96
+predict done...
+6616 98
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+predict done...
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+start training using labels from 15469 to 19469
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 0 training started
+tree 1 training started
+tree 2 training started
+label insertion done...
+label insertion done...
+label insertion done...
+tree write starts...
+tree write done...
+tree 0 training completed
+tree write starts...
+tree write done...
+tree 2 training completed
+tree write starts...
+tree write done...
+tree 1 training completed
+tree 0 predicting started
+tree 0 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+6616 101
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+6616 96
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+6616 98
+predict done...
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+start training using labels from 19469 to 23469
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 2 training started
+tree 1 training started
+tree 2 training started
+label insertion done...
+label insertion done...
+label insertion done...
+tree write starts...
+tree write done...
+tree 0 training completed
+tree write starts...
+tree write done...
+tree 1 training completed
+tree write starts...
+tree write done...
+tree 2 training completed
+tree 1 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+6616 101
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+6616 96
+predict done...
+6616 98
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+predict done...
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+start training using labels from 23469 to 27469
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 2 training started
+tree 1 training started
+tree 2 training started
+label insertion done...
+label insertion done...
+label insertion done...
+tree write starts...
+tree write starts...
+tree write done...
+tree 2 training completed
+tree write done...
+tree 0 training completed
+tree write starts...
+tree write done...
+tree 1 training completed
+tree 0 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+6616 101
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+6616 96
+predict done...
+6616 98
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+predict done...
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+Training time: 814.989 s
+tree 0 predicting started
+tree 1 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+6616 101
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+6616 96
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+6616 98
+predict done...
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+prediction time: 52.2219 ms
+model size: 211.361 mb
+/home/weit/miniconda3/lib/python3.7/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+/home/weit/.local/lib/python3.7/site-packages/xclib-0.96-py3.7-linux-x86_64.egg/xclib/data/data_utils.py:173: UserWarning: Header mis-match from inferred shape!
+  warnings.warn("Header mis-match from inferred shape!")
+(14146, 30938)
+(6616, 30938)
+(6616, 5)
+Precision@1,3,5: 83.96311970979444, 71.99717855703346, 62.40326481257558
+nDCG@1,3,5: 83.96311970979444, 74.74788966595236, 67.41142271149371
+PSPrecision@1,3,5: 11.261821515535917 12.64708048739365 13.754848739231553
+PSnDCG@1,3,5: 11.261821515535917 12.293063578968313 13.069710185541282
+===============
+../sandbox/results/wiki10/model/score_mat_init_ratio_50_batch_size_4000_0
+=======len of valid_idx:  6616
+6616 (6616, 30938)
+Precision@1,3,5: 82.37605804111246, 64.621120515921, 52.04050785973398
+nDCG@1,3,5: 82.37605804111246, 68.6961231041819, 58.92184686241658
+===============
+../sandbox/results/wiki10/model/score_mat_init_ratio_50_batch_size_4000_1
+=======len of valid_idx:  3983
+3983 (3983, 30938)
+Precision@1,3,5: 52.12151644489078, 34.51334839735543, 24.54933467235752
+nDCG@1,3,5: 52.12151644489078, 38.53026227422073, 30.54490325214732
+===============
+../sandbox/results/wiki10/model/score_mat_init_ratio_50_batch_size_4000_2
+=======len of valid_idx:  880
+880 (880, 30938)
+Precision@1,3,5: 81.93181818181819, 41.89393939393939, 28.613636363636363
+nDCG@1,3,5: 81.93181818181819, 50.424947780754245, 38.89142580923408
+===============
+../sandbox/results/wiki10/model/score_mat_init_ratio_50_batch_size_4000_3
+=======len of valid_idx:  2525
+2525 (2525, 30938)
+Precision@1,3,5: 79.48514851485149, 45.636963696369634, 32.1980198019802
+nDCG@1,3,5: 79.48514851485149, 53.05349258417442, 41.725773913761714
+======Average Precision@1: 71.17949438052015

@@ -53,6 +53,17 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
     mask = new _bool[ max_n ]();
     float *node_cent = new float[cent_mat->nr];
 
+    for (int cur_node = 1; cur_node < nodes.size(); ++ cur_node) {
+        if (nodes[cur_node]->Y_cent.empty() == true) {
+            nodes[cur_node]->Y_cent.resize(cent_mat->nr);
+            for (int j = 0; j < cent_mat->nr; ++ j) nodes[cur_node]->Y_cent[j] = 0;
+
+            for (int lbl: nodes[cur_node]->Y) {
+                add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], &nodes[cur_node]->Y_cent[0]);
+            }
+        }
+    }
+
     //cout << "number of labels = " << num_Y << ", base_no = " << base_no << endl;
     for (int i = base_no; i < num_Y; ++ i) {
 
@@ -61,6 +72,9 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
 
         while  (true) {
             nodes[cur_node]->Y.push_back(i);
+            if (cur_node > 0) {
+                add_s_to_d_vec(cent_mat->data[i], cent_mat->size[i], &nodes[cur_node]->Y_cent[0]);
+            }
 
             if (nodes[cur_node]->is_leaf == false) {
 
@@ -68,16 +82,6 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 float maxSim = -1;
 
                 for (int ch: nodes[cur_node]->children) {
-
-                    if (nodes[ch]->Y_cent.empty() == true) {
-                        nodes[ch]->Y_cent.resize(cent_mat->nr);
-                        for (int j = 0; j < cent_mat->nr; ++ j) nodes[ch]->Y_cent[j] = 0;
-
-                        for (int lbl: nodes[ch]->Y) {
-                            add_s_to_d_vec(cent_mat->data[lbl], cent_mat->size[lbl], &nodes[ch]->Y_cent[0]);
-                        }
-                    } else {
-                    }
 
                     for (int j = 0; j < cent_mat->nr; ++ j) node_cent[j] = nodes[ch]->Y_cent[j];
                     normalize_d_vec(node_cent, cent_mat->nr);
@@ -174,10 +178,14 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 int ch = node->children[j];
                 for (int l: nodes[ch]->Y) partition[l] = j;
             }
-            SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition );
-            //node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 1, num_Xf, n_Xf );
+            /*
+            SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0 );
             delete node->w;
             node->w = svms(n_trn_X_Xf, assign_mat, param, 0);
+            */
+            SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0);
+            node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 3, num_Xf, n_Xf );
+            //reindex_rows( node->w, num_Xf, n_Xf );
             delete assign_mat;
         }
 
@@ -189,7 +197,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
 
     //cout << "leaf partition done..." << endl;
     // rearrange nodes
-    sort_nodes(nodes);
+    //sort_nodes(nodes);
     delete node_cent;
     delete[] mask;
     //cout << "nodes sorting done..." << endl;

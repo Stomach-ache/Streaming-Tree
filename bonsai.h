@@ -381,7 +381,7 @@ void squeeze_partition_array(vector<_int> &partition);
 void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w );
 void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w );
 void reindex_rows( SMatF* mat, _int nr, VecI& rows );
-SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition);
+SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition, int base_no );
 SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int finetune_iter, int nr, VecI &n_Xf );
 SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no );
 

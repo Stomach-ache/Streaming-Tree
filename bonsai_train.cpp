@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
   trn_X_Y = nullptr;
 
   cout << "matrix transpose done..." << endl;
-  cout << tmp->nc << ' ' << tmp->nr << endl;
+  //cout << tmp->nc << ' ' << tmp->nr << endl;
 
   vector<int> lbl_freq(tmp->nc), lbl_idx(tmp->nc);
 
@@ -173,12 +173,14 @@ int main(int argc, char* argv[])
   tmp2 = nullptr;
   cout << tmp->nc << ' ' << tmp->nr << endl;
 
+  /*
   for (int i = 0; i < tmp->nc; ++ i) lbl_freq[i] = tmp->size[i];
   for (int i = 0; i < tmp->nc; ++ i) {
       cout << lbl_freq[i] << endl;
       if (i == tmp->nc / 2) cout << "===============================" << endl;
   }
 
+  */
 
   cout << "label sorting done..." << endl;
   // slicing part of
@@ -191,8 +193,10 @@ int main(int argc, char* argv[])
   param.beam_size = 10;
 
   for (int i = int(init_ratio * num_lbl); ; i += batch_size) {
-      if (i == num_lbl + batch_size) break;
-
+      //if (i == num_lbl + batch_size) break;
+      if (i > num_lbl + int(batch_size * 0.1)) {
+          break;
+      }
       i = min(i, num_lbl);
       cout << "start training using labels from " << base_no << " to " << i << endl;
       tmp->nc = i;

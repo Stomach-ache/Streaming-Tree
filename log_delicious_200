@@ -1,0 +1,580 @@
+start label sorting...
+matrix transpose done...
+983 12920
+label sorting done...
+start training using labels from 0 to 491
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 2 training started
+tree 1 training started
+tree 2 training started
+node 0
+node 0
+node node 0
+
+node 0
+node node 0
+
+split internal node
+ted
+tree 1 trainin
+ split internal node
+ted
+tree 1 trainin
+ split internal node
+label 57 is singleton
+gets assigned to partition 32
+label 60 is singleton
+gets assigned to partition 21
+label 27 is singleton
+gets assigned to partition 77
+label 89 is singleton
+gets assigned to partition 72
+label 2 is singleton
+gets assigned to partition 86
+label 44 is singleton
+gets assigned to partition 21
+label 74 is singleton
+gets assigned to partition 47
+label 30 is singleton
+gets assigned to partition 71
+label 34 is singleton
+gets assigned to partition 92
+label 6 is singleton
+gets assigned to partition 65
+label 45 is singleton
+gets assigned to partition 66
+label 5 is singleton
+gets assigned to partition 86
+label 56 is singleton
+gets assigned to partition 77
+label 26 is singleton
+gets assigned to partition 17
+label 11 is singleton
+gets assigned to partition 81
+label 41 is singleton
+gets assigned to partition 81
+label 22 is singleton
+gets assigned to partition 81
+label 73 is singleton
+gets assigned to partition 67
+label 83 is singleton
+gets assigned to partition 32
+label 49 is singleton
+gets assigned to partition 25
+label 29 is singleton
+gets assigned to partition 32
+label 82 is singleton
+gets assigned to partition 67
+label 39 is singleton
+gets assigned to partition 0
+time spent on kmeans: 0.113115 secs
+label 53 is singleton
+gets assigned to partition 31
+ is singleton
+gets assigned to partition 28
+label 43 is singleton
+tion 28
+label 54 is singleton
+label 54 is singleton
+gets assigned to partition 34
+label 54 is singleton
+tion 34
+label 51 is singleton
+gets assigned to partigets assigned to partition 29label 22 is singleton
+tion 29
+label 65 is singleton
+gets assigned to partigets assigned to partition 0
+
+label 27 is singleton
+tion 0
+label 84 is singleton
+gets assigned to partigets assigned to partition 0
+
+label 13 is singleton
+tion 0
+label 88 is singleton
+gets assigned to partigets assigned to partition 29
+label 16 is singleton
+tion 29
+label 67 is singleton
+gets assigned to partigets assigned to partition 86
+label 56 is singleton
+tion 86
+label 7 is singleton
+
+gets assigned to partgets assigned to partition 71
+label 6 is singleton
+ition 71
+label 5 is singleton
+gets assigned to partgets assigned to partition 63
+label 21 is singleton
+tion 63
+label 39 is singleton
+gets assigned to partigets assigned to partition 63
+label 36 is singleton
+tion 63
+label 66 is singleton
+gets assigned to partigets assigned to partition 36label 48 is singleton
+tion 36
+label 46 is singleton
+gets assigned to partigets assigned to partition 91
+label 98 is singleton
+tion 91
+label 93 is singleton
+gets assigned to partigets assigned to partition 75
+label 41 is singleton
+tion 75
+label 89 is singleton
+gets assigned to partigets assigned to partition 18
+label 69 is singleton
+tion 18
+label 82 is singleton
+gets assigned to partigets assigned to partition 25
+label 81 is singleton
+tion 25
+label 99 is singleton
+gets assigned to partigets assigned to partition 69
+label 60 is singleton
+tion 69
+label 61 is singleton
+gets assigned to partigets assigned to partition 51label 96 is singleton
+tion 51
+label 41 is singleton
+gets assigned to partigets assigned to partition 69
+label 44 is singleton
+tion 69
+label 78 is singleton
+gets assigned to partigets assigned to partition 6
+
+label 47 is singleton
+tion 6
+label 53 is singleton
+gets assigned to partigets assigned to partition 31
+label 51 is singleton
+tion 31
+label 77 is singleton
+gets assigned to partigets assigned to partition 64
+label 91 is singleton
+tion 64
+label 33 is singleton
+gets assigned to partigets assigned to partition 8
+
+label 55 is singleton
+tion 8
+label 72 is singleton
+gets assigned to partigets assigned to partition 64
+label 28 is singleton
+tion 64
+label 9 is singleton
+
+gets assigned to partgets assigned to partition 34
+label 26 is singleton
+tion 34
+label 12 is singleton
+gets assigned to partigets assigned to partition 63
+label 3 is singleton
+ition 63
+label 73 is singletongets assigned to partigets assigned to partition 27
+label 62 is singleton
+tion 27
+label 13 is singleton
+gets assigned to partigets assigned to partition 43
+label 12 is singleton
+tion 43
+label 26 is singleton
+gets assigned to partigets assigned to partition 25
+label 61 is singleton
+tion 25
+label 76 is singleton
+gets assigned to partigets assigned to partition 14
+label 95 is singleton
+tion 14
+label 95 is singleton
+gets assigned to partition 31
+label 8 is singleton
+gets assigned to partition 29
+time spent on kmeans: time spent on kmeans: 0.13091 secs
+time spent on kmeans: time spent on kmeans: 0.13091 secs
+0.130901 secs
+n_effective_partitions=69
+train leaf node 1 with 2 labels
+train leaf node 2 with 2 labels
+train leaf node 3 with 3 labels
+train leaf node 4 with 2 labels
+train leaf node 5 with 3 labels
+train leaf node 6 with 5 labels
+train leaf node 7 with 3 labels
+train leaf node 8 with 3 labels
+train leaf node 9 with 4 labels
+train leaf node 10 with 5 labels
+train leaf node 11 with 2 labels
+train leaf node 12 with 3 labels
+train leaf node 13 with 3 labels
+train leaf node 14 with 2 labels
+train leaf node 15 with 5 labels
+train leaf node 16 with 2 labels
+train leaf node 17 with 3 labels
+train leaf node 18 with 6 labels
+train leaf node 19 with 4 labels
+n_effective_partitions=72
+train leaf node 1 with 2 labels
+train leaf node 2 with 2 labels
+train leaf node 3 with 2 labels
+train leaf node 4 with 2 labels
+train leaf node 20 with 2 labels
+train leaf node 5 with 2 labels
+train leaf node 6 with 3 labels
+train leaf node 21 with 11 labels
+train leaf node 7 with 3 labels
+train leaf node 8 with 2 labels
+train leaf node 9 with 1 labels
+train leaf node 10 with 2 labels
+train leaf node 11 with 5 labels
+train leaf node 12 with 5 labels
+train leaf node 13 with 2 labels
+train leaf node 14 with 5 labels
+train leaf node 15 with 2 labels
+train leaf node 16 with 4 labels
+train leaf node 17 with 3 labels
+train leaf node 18 with 3 labels
+train leaf node 19 with 2 labels
+train leaf node 20 with 2 labels
+train leaf node 21 with 2 labels
+train leaf node 22 with 2 labels
+train leaf node 23 with 6 labels
+train leaf node 24 with 7 labels
+train leaf node 25 with 3 labels
+train leaf node 26 with 4 labels
+train leaf node 27 with 6 labels
+train leaf node 28 with 7 labels
+train leaf node 22 with 5 labels
+n_effective_partitions=77
+train leaf node 1 with 2 labels
+train leaf node 2 with 3 labels
+train leaf node 3 with 2 labels
+train leaf node 29 with 5 labels
+train leaf node 4 with 2 labels
+train leaf node 5 with 2 labels
+train leaf node 6 with 2 labels
+train leaf node 7 with 2 labels
+train leaf node 8 with 2 labels
+train leaf node 9 with 3 labels
+train leaf node 30 with 2 labels
+train leaf node 10 with 3 labels
+train leaf node 31 with 2 labels
+train leaf node 23 with 3 labels
+train leaf node 23 with 3 labels
+train leaf node 11 with 5 labels
+train leaf node 32 with 13 labels
+train leaf node 24 with 4 labels
+train leaf node 12 with 2 labels
+train leaf node 13 with 2 labels
+train leaf node 14 with 3 labels
+train leaf node 15 with 2 labels
+train leaf node 16 with 2 labels
+train leaf node 17 with 2 labels
+train leaf node 18 with 3 labels
+train leaf node 25 with 8 labels
+train leaf node 19 with 2 labels
+train leaf node 20 with 12 labels
+train leaf node 26 with 6 labels
+train leaf node 27 with 5 labels
+train leaf node 28 with 11 labels
+train leaf node 33 with 10 labels
+train leaf node 29 with 3 labels
+train leaf node 30 with 4 labels
+train leaf node 31 with 5 labels
+train leaf node 32 with 4 labels
+train leaf node 34 with 4 labels
+train leaf node 33 with 8 labels
+train leaf node 35 with 9 labels
+train leaf node 36 with 5 labels
+train leaf node 37 with 4 labels
+train leaf node 38 with 4 labels
+train leaf node 39 with 13 labels
+train leaf node 34 with 10 labels
+train leaf node 35 with 9 labels
+train leaf node 36 with 2 labels
+train leaf node 37 with 8 labels
+train leaf node 38 with 13 labels
+train leaf node 21 with 7 labels
+train leaf node 22 with 2 labels
+train leaf node 23 with 6 labels
+train leaf node 24 with 2 labels
+train leaf node 25 with 3 labels
+train leaf node 26 with 2 labels
+train leaf node 27 with 3 labels
+train leaf node 28 with 3 labels
+train leaf node 29 with 5 labels
+train leaf node 30 with 3 labels
+train leaf node 31 with 5 labels
+train leaf node 32 with 3 labels
+train leaf node 33 with 4 labels
+train leaf node 34 with 12 labels
+train leaf node 39 with 7 labels
+train leaf node 35 with 11 labels
+train leaf node 40 with 6 labels
+train leaf node 40 with 8 labels
+train leaf node 36 with 7 labels
+train leaf node 41 with 5 labels
+train leaf node 42 with 7 labels
+train leaf node 37 with 19 labels
+train leaf node 41 with 9 labels
+train leaf node 43 with 5 labels
+train leaf node 44 with 5 labels
+train leaf node 45 with 11 labels
+train leaf node 42 with 5 labels
+train leaf node 43 with 3 labels
+train leaf node 44 with 5 labels
+train leaf node 45 with 6 labels
+train leaf node 46 with 18 labels
+train leaf node 46 with 8 labels
+train leaf node 47 with 6 labels
+train leaf node 48 with 10 labels
+train leaf node 38 with 6 labels
+train leaf node 39 with 9 labels
+train leaf node 49 with 10 labels
+train leaf node 40 with 2 labels
+train leaf node 41 with 8 labels
+train leaf node 47 with 6 labels
+train leaf node 50 with 2 labels
+train leaf node 51 with 3 labels
+train leaf node 52 with 7 labels
+train leaf node 48 with 4 labels
+train leaf node 49 with 19 labels
+train leaf node 53 with 25 labels
+train leaf node 42 with 5 labels
+train leaf node 43 with 4 labels
+train leaf node 44 with 9 labels
+train leaf node 45 with 7 labels
+train leaf node 46 with 18 labels
+train leaf node 47 with 5 labels
+train leaf node 48 with 7 labels
+train leaf node 49 with 9 labels
+train leaf node 50 with 4 labels
+train leaf node 51 with 2 labels
+train leaf node 52 with 9 labels
+train leaf node 53 with 2 labels
+train leaf node 54 with 12 labels
+train leaf node 55 with 8 labels
+train leaf node 56 with 7 labels
+train leaf node 57 with 4 labels
+train leaf node 58 with 3 labels
+train leaf node 59 with 7 labels
+train leaf node 60 with 4 labels
+train leaf node 61 with 16 labels
+train leaf node 50 with 6 labels
+train leaf node 51 with 6 labels
+train leaf node 52 with 4 labels
+train leaf node 54 with 9 labels
+train leaf node 53 with 5 labels
+train leaf node 55 with 10 labels
+train leaf node 54 with 4 labels
+train leaf node 55 with 14 labels
+train leaf node 56 with 19 labels
+train leaf node 56 with 6 labels
+train leaf node 57 with 8 labels
+train leaf node 58 with 28 labels
+train leaf node 62 with 8 labels
+train leaf node 63 with 9 labels
+train leaf node 64 with 18 labels
+train leaf node 57 with 9 labels
+train leaf node 58 with 14 labels
+train leaf node 59 with 15 labels
+train leaf node 60 with 10 labels
+train leaf node 61 with 4 labels
+train leaf node 62 with 17 labels
+train leaf node 59 with 5 labels
+train leaf node 60 with 27 labels
+train leaf node 63 with 11 labels
+train leaf node 65 with 6 labels
+train leaf node 66 with 19 labels
+train leaf node 64 with 3 labels
+train leaf node 65 with 4 labels
+train leaf node 66 with 10 labels
+train leaf node 67 with 19 labels
+train leaf node 67 with 3 labels
+train leaf node 68 with 11 labels
+train leaf node 61 with 9 labels
+train leaf node 62 with 4 labels
+train leaf node 63 with 2 labels
+train leaf node 64 with 6 labels
+train leaf node 65 with 13 labels
+train leaf node 69 with 9 labels
+train leaf node 70 with 9 labels
+train leaf node 66 with 5 labels
+train leaf node 67 with 11 labels
+train leaf node 71 with 4 labels
+train leaf node 72 with 5 labels
+train leaf node 73 with 4 labels
+train leaf node 68 with 2 labels
+train leaf node 74 with 13 labels
+train leaf node 69 with 35 labels
+train leaf node 68 with 4 labels
+train leaf node 69 with 22 labels
+train leaf node 75 with 21 labels
+train leaf node 70 with 23 labels
+train leaf node 76 with 22 labels
+train leaf node 71 with 27 labels
+train leaf node 77 with 8 labels
+tree 0 training completed
+train leaf node 72 with 7 labels
+tree 2 training completed
+tree 1 training completed
+tree 0 predicting started
+tree 1 predicting started
+tree 2 predicting started
+tree 1 predicting started
+tree predict starts...
+predict starts...
+predict starts...
+3185 70
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+3185 78
+3185 73
+predict done...
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+start training using labels from 491 to 691
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 1 training started
+tree 1 training started
+tree 2 training started
+label insertion done...
+label insertion done...
+label insertion done...
+tree write starts...
+tree write starts...
+tree write starts...
+tree write done...
+tree 2 training completed
+tree write done...
+tree 0 training completed
+tree write done...
+tree 1 training completed
+tree 0 predicting started
+tree 1 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+3185 78
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+3185 70
+3185 73
+predict done...
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+start training using labels from 691 to 891
+do matrix transpose...
+ready to train ....
+tree 0 training started
+tree 1 training started
+tree 1 training started
+tree 2 training started
+label insertion done...
+label insertion done...
+label insertion done...
+tree write starts...
+tree write starts...
+tree write starts...
+tree write done...
+tree 2 training completed
+tree write done...
+tree 1 training completed
+tree write done...
+tree 0 training completed
+tree 0 predicting started
+tree 1 predicting started
+tree 2 predicting started
+predict starts...
+predict starts...
+predict starts...
+3185 78
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+3185 70
+3185 73
+predict done...
+predict done...
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+Training time: 4.26608 s
+tree tree 1ree 0 predicting started predicting started
+2 predicting started
+
+tree tree 1ree 0 predicting started predicting started
+2 predicting started
+tree tree 1ree 0 predicting started predicting started
+2 predicting started
+predict starts...
+predict starts...
+predict starts...
+3185 78
+3185 70
+3185 73
+predict done...
+predict done...
+predict done...
+free tree done...
+free tree score mat done...
+tree 0 predicting completed
+free tree done...
+free tree score mat done...
+tree 2 predicting completed
+free tree done...
+free tree score mat done...
+tree 1 predicting completed
+prediction time: 0.575025 ms
+model size: 7.26672 mb
+/home/weit/miniconda3/lib/python3.7/site-packages/sklearn/externals/joblib/externals/cloudpickle/cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+/home/weit/.local/lib/python3.7/site-packages/xclib-0.96-py3.7-linux-x86_64.egg/xclib/data/data_utils.py:173: UserWarning: Header mis-match from inferred shape!
+  warnings.warn("Header mis-match from inferred shape!")
+(12920, 983)
+(3185, 983)
+(3185, 5)
+Precision@1,3,5: 65.52590266875981, 60.324437467294615, 55.340659340659336
+nDCG@1,3,5: 65.52590266875981, 61.63930809251794, 57.913685610246034
+PSPrecision@1,3,5: 31.059055896716707 32.676571150844396 33.15921195133215
+PSnDCG@1,3,5: 31.059055896716707 32.33587713887898 32.72055235273096
+===============
+../sandbox/results/delicious/model/score_mat_init_ratio_50_batch_size_200_0
+Precision@1,3,5: 66.7817896389325, 56.93354264782836, 50.51805337519624
+nDCG@1,3,5: 66.7817896389325, 59.15330653040378, 54.19960535297893
+===============
+../sandbox/results/delicious/model/score_mat_init_ratio_50_batch_size_200_1
+Precision@1,3,5: 49.89010989010989, 36.0334903192046, 27.654631083202514
+nDCG@1,3,5: 49.89010989010989, 39.14913287884054, 32.541760810622726
+===============
+../sandbox/results/delicious/model/score_mat_init_ratio_50_batch_size_200_2
+Precision@1,3,5: 50.989010989010985, 38.26268969126112, 30.932496075353217
+nDCG@1,3,5: 50.989010989010985, 41.10474447598148, 35.28539852239454
+======Average Precision@1: 50.43956043956044

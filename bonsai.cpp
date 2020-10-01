@@ -198,13 +198,17 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
       alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
     }
 
+  if (reset_w) {
     for(i=0; i<w_size; i++)
         w[i] = 0;
+  }
 
   for(i=0; i<l; i++)
     {
       xTx[i] = sparse_operator::nrm2_sq( size[i], data[i] );
-      sparse_operator::axpy(y[i]*alpha[2*i], size[i], data[i], w);
+        //if (reset_w) {
+        sparse_operator::axpy(y[i]*alpha[2*i], size[i], data[i], w);
+       // }
       index[i] = i;
     }
 
@@ -340,11 +344,15 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
   //Initial alpha can be set here. Note that
   // 0 <= alpha[i] <= upper_bound[GETI(i)]
 
-  for(i=0; i<l; i++)
-    alpha[i] = 0;
+  for(i=0; i<l; i++) {
+      //alpha[i] = 0;
+      alpha[i] = min(0.001*upper_bound[GETI(i)], 1e-8);
+  }
 
+  if (reset_w) {
     for(i=0; i<w_size; i++)
         w[i] = 0;
+  }
 
   for(i=0; i<l; i++)
     {
@@ -352,7 +360,9 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
 
       //feature_node * const xi = prob->x[i];
       QD[i] += sparse_operator::nrm2_sq( size[i], data[i] );
+    if (reset_w) {
       sparse_operator::axpy(y[i]*alpha[i], size[i], data[i], w);
+    }
 
       index[i] = i;
     }
@@ -471,6 +481,7 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
 
   SMatF* w_mat = new SMatF( num_Xf, num_Y );
   _float* w = new _float[ num_Xf ];
+  for (int i = 0; i < num_Xf; ++ i) w[i] = 0;
 
   for( _int l=0; l<num_Y; l++ )
     {
@@ -484,7 +495,7 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
           w[prev_w_mat->data[l][i].first] = prev_w_mat->data[l][i].second;
       }
 
-      bool reset_w = true;
+      bool reset_w = false;
       if( param.septype == L2R_L2LOSS_SVC )
         solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
       else if( param.septype == L2R_LR )
@@ -504,7 +515,6 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
         y[ trn_Y_X->data[l][i].first ] = -1;
     }
 
-  //reindex_rows( w_mat, nr, n_Xf );
   delete prev_w_mat;
   delete [] y;
   delete [] w;
@@ -609,7 +619,7 @@ void active_dims( SMatF* mat, VecI& insts, VecI& dims, _llint& nnz )
 
 ///////////////////// Modified_code_start /////////////////////
 
-SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition)
+SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition, int base_no )
 {
   _int num_Y = Y_X->nc;
   _int num_X = Y_X->nr;
@@ -622,7 +632,7 @@ SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition)
   }
 
   vector< vector<_int> > Y_by_part(num_partitions);
-  for( _int i=0; i<num_Y; i++ ) {
+  for( _int i=base_no; i<num_Y; i++ ) {
     if(DEBUG_PARTITION_TO_ASSIGN_MAT)
       cout << "adding " << i << " to partition " << partition[i] << endl;
     Y_by_part[ partition[i] ].push_back(i);
@@ -975,7 +985,7 @@ void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _i
     cout << "partition.size() = " << partition.size() << endl;
     cout << "Y_X.shape = " << Y_X->nr << "x" << Y_X->nc << endl;
   }
-  SMatF* assign_mat = partition_to_assign_mat( Y_X, partition );
+  SMatF* assign_mat = partition_to_assign_mat( Y_X, partition, 0 );
 
   if(KMEANS_DEBUG)
     cout << "partition_to_assign_mat done" << endl;
@@ -1296,11 +1306,11 @@ void update_svm_scores( Node* node, SMatF* tst_X_Xf, SMatF* score_mat, SMatI* id
 	newvalue += discount * oldvalue; // ??? what's `discount`?
 
 	// update the "child" or "label"'s score
-        if (id_type == -1 && (target < lft || target >= rgt)) {
-        } else {
+        //if (id_type == -1 && (target < lft || target >= rgt)) {
+        //} else {
             score_mat->data[ inst ][ score_mat->size[ inst ]++ ] = make_pair( target, newvalue );
             id_type_mat->data[ inst ][ id_type_mat->size[ inst ]++ ] = make_pair( target, id_type );
-        }
+        //}
     }
 
     reset_d_with_s( w_mat->data[i], w_mat->size[i], densew );
@@ -1602,6 +1612,7 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
   fin.close();
   //cout << "=======size of lbl_idx: " << lbl_idx << endl;
 
+  /*
   for (int i = 0; i < score_mat->nc; ++ i) {
       for (int j = 0; j < score_mat->size[i]; ++ j) {
           assert (score_mat->data[i][j].first < num_Y);
@@ -1611,15 +1622,36 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
           assert (score_mat->data[i][j].first < num_Y);
       }
   }
+  */
 
   for( _int i=0; i<score_mat->nc; i++ ) // for each testing point
     {
       _int siz = score_mat->size[i]; // number of labels with scores
-      sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
-      _int newsiz = min( siz, 10 ); // report the top 100?
-      Realloc( siz, newsiz, score_mat->data[i] );
-      score_mat->size[i] = newsiz;
-      sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id
+      //sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
+
+      /*
+      bool isOutlier = true;
+      for (int j = 0; j < 3 && j < score_mat->size[i]; ++ j) {
+          if (score_mat->data[i][j].first >= lft && score_mat->data[i][j].first < rgt) isOutlier = false;
+      }
+      if (isOutlier) {
+          score_mat->size[i] = 0;
+          delete score_mat->data[i];
+          score_mat->data[i] = nullptr;
+      } else {
+      */
+
+          for (int j = 0; j < score_mat->size[i]; ++ j) {
+            if (score_mat->data[i][j].first < lft || score_mat->data[i][j].first >= rgt)
+              score_mat->data[i][j].second = -1;
+            score_mat->data[i][j].first = lbl_idx[score_mat->data[i][j].first];
+          }
+            sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
+
+          _int newsiz = min( siz, 3000 ); // report the top 100?
+          Realloc( siz, newsiz, score_mat->data[i] );
+          score_mat->size[i] = newsiz;
+          sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id
     }
 
   return score_mat;

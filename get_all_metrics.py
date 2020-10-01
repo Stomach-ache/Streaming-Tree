@@ -74,47 +74,66 @@ print('PSPrecision@1,3,5:', get_psp_1(res, targets, inv_w, mlb), get_psp_3(res, 
 print('PSnDCG@1,3,5:', get_psndcg_1(res, targets, inv_w, mlb), get_psndcg_3(res, targets, inv_w, mlb), get_psndcg_5(res, targets, inv_w, mlb))
 
 
-'''
 with open(args.model_dir + '/lbl_idx', 'r') as fp:
-    lbl_idx = map(int, fp.readlines())
-print (lbl_idx)
-'''
+    lbl_idx = list(map(int, fp.readlines()))
+#print (lbl_idx)
 
 num_label = Yte.shape[1]
 base_no = int(args.init_ratio * num_label)
 batch_idx = 0
 batch_size = args.batch_size
 j = 0
-while j <= num_label:
+avg_p1 = 0
+#avg_correct_unvalid = 0
+#tmp_targets = targets.copy()
+
+while j + batch_size <= num_label + int(batch_size * 0.1):
     print ("===============")
     score_file = args.model_dir + "/score_mat_init_ratio_" + str(int(args.init_ratio * 100)) + "_batch_size_" + str(batch_size) + "_" + str(batch_idx)
     print (score_file)
     prob = data_utils.read_sparse_file(score_file, force_header=True)
 
-    #print (prob.shape)
+    '''
+    lft = j
+    rgt = base_no if batch_idx == 0 else min(j + batch_size, num_label)
+    active_lbl = set(lbl_idx[lft:rgt])
 
+    valid_idx = []
+    correct_unvalid = 0
+    '''
     for i in range(num_sample):
+        '''
+        is_valid = False
+        for k in tmp_targets[i].indices:
+            if k in active_lbl:
+                is_valid = True
+                break
+        if is_valid == False:
+            if len(prob[i].data) == 0:
+                correct_unvalid += 1
+            continue
+
+        valid_idx.append(i)
+
+        if len(prob[i].data) == 0:
+            res.append([lbl_idx[lft]]*topk)
+        else:
+        '''
         y = np.argsort(prob[i].data)[-topk:][::-1]
         if len(y) < topk:
-            y = np.array(list(y) + [i] * (topk-len(y)))
+            y = np.array(list(y) + [y[-1]] * (topk-len(y)))
         res[i] = prob[i].indices[y]
-        '''
-        rgt = base_no
-        if j > 0:
-            rgt = min(num_label, j + batch_size)
 
-        cc = 0
-        for k in y:
-            if prob[i].indices[k] < j or prob[i].indices[k] >= rgt:
-                continue
-            res[i][cc] = prob[i].indices[k]
-            cc += 1
-            if cc >= topk:
-                break
-        '''
-
-
-    print (res[0])
+    '''
+    print ("=======len of valid_idx: ", len(valid_idx))
+    targets = tmp_targets[valid_idx]
+    print (len(res), targets.shape)
+    #print (res[0])
+    '''
+    if batch_idx > 0:
+        avg_p1 += get_p_1(res, targets, mlb)
+    #    avg_correct_unvalid += correct_unvalid / (num_sample - len(valid_idx))
+    #print (f'Old class detection Acc: {correct_unvalid / (num_sample - len(valid_idx))}')
     print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
     print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
 
@@ -124,6 +143,10 @@ while j <= num_label:
         j += batch_size
     batch_idx += 1
 
+avg_p1 /= (batch_idx - 1)
+#avg_correct_unvalid /= (batch_idx - 1)
+print (f'======Average Precision@1: {avg_p1}')
+#print (f'======Average Correct Unvalid: {avg_correct_unvalid}')
 
 '''
 print ('=======re-ranking============')
