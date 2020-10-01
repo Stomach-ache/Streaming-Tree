@@ -185,7 +185,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             */
             SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0);
             node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 3, num_Xf, n_Xf );
-            //reindex_rows( node->w, num_Xf, n_Xf );
+            reindex_rows( node->w, num_Xf, n_Xf );
             delete assign_mat;
         }
 
