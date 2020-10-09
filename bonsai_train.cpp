@@ -194,9 +194,6 @@ int main(int argc, char* argv[])
 
   for (int i = int(init_ratio * num_lbl); ; i += batch_size) {
       //if (i == num_lbl + batch_size) break;
-      if (i > num_lbl + int(batch_size * 0.1)) {
-          break;
-      }
       i = min(i, num_lbl);
       cout << "start training using labels from " << base_no << " to " << i << endl;
       tmp->nc = i;
@@ -225,6 +222,8 @@ int main(int argc, char* argv[])
       base_no = i;
       delete trn_X_Y;
       trn_X_Y = nullptr;
+
+      if (i >= num_lbl) break;
   }
   // modified_code ends....2020.09.11
 

@@ -93,11 +93,11 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
     print (score_file)
     prob = data_utils.read_sparse_file(score_file, force_header=True)
 
-    '''
     lft = j
     rgt = base_no if batch_idx == 0 else min(j + batch_size, num_label)
     active_lbl = set(lbl_idx[lft:rgt])
 
+    '''
     valid_idx = []
     correct_unvalid = 0
     '''
@@ -120,8 +120,12 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
         else:
         '''
         y = np.argsort(prob[i].data)[-topk:][::-1]
+        if len(y) == 0:
+            res[i] = [lbl_idx[j]] * topk
+            continue
         if len(y) < topk:
             y = np.array(list(y) + [y[-1]] * (topk-len(y)))
+            res[i]
         res[i] = prob[i].indices[y]
 
     '''

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 dataset="wiki10"
-dataset="eurlex"
-#dataset="delicious"
+#dataset="eurlex"
+dataset="delicious"
 data_dir="../sandbox/data/$dataset"
 results_dir="../sandbox/results/$dataset"
 model_dir="../sandbox/results/$dataset/model"
@@ -15,7 +15,7 @@ tst_lbl_file="${data_dir}/tst_X_Y.txt"
 trn_score_file="${results_dir}/trn_score_mat.txt"
 tst_score_file="${results_dir}/tst_score_mat.txt"
 init_ratio=0.5
-batch_size=1000
+batch_size=100
 rand_seed=95
 
 if [[ "$dataset" == "eurlex" ]]; then
@@ -51,6 +51,7 @@ mkdir -p $model_dir
     -q 0 \
     -ptype 0 \
     -ctype 0
+#./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
 
 # testing
 #./bonsai_predict $trn_ft_file $trn_score_file $model_dir

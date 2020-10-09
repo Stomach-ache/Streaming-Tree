@@ -5,6 +5,8 @@
 */
 
 #include "bonsai.h"
+//#include "linear.h"
+#include "tron.h"
 
 using namespace std;
 
@@ -167,24 +169,365 @@ void normalize_d_vec( _float* dvec, _int siz )
 }
 
 
+//=================================================================
+
+class l2r_erm_fun: public Function
+{
+public:
+	l2r_erm_fun(const subproblem *prob, float *C);
+	~l2r_erm_fun();
+
+	float fun(float *w);
+	float line_search(float *d, float *w, float *g, float alpha, float *f);
+	int get_nr_variable(void);
+
+protected:
+	virtual float C_times_loss(int i, float wx_i) = 0;
+	void Xv(float *v, float *Xv);
+	void XTv(float *v, float *XTv);
+
+	float *C;
+	const subproblem *prob;
+	float *wx;
+	float *tmp;
+	float wTw;
+	float current_f;
+};
+
+l2r_erm_fun::l2r_erm_fun(const subproblem *prob, float *C)
+{
+	int l=prob->l;
+
+	this->prob = prob;
+
+	wx = new float[l];
+	tmp = new float[l];
+	this->C = C;
+}
+
+l2r_erm_fun::~l2r_erm_fun()
+{
+	delete[] wx;
+    wx = nullptr;
+	delete[] tmp;
+    tmp = nullptr;
+}
+
+float l2r_erm_fun::fun(float *w)
+{
+	int i;
+	float f=0;
+	int l=prob->l;
+	int w_size=get_nr_variable();
+
+	wTw = 0;
+	Xv(w, wx);
+
+	for(i=0;i<w_size;i++)
+		wTw += w[i]*w[i];
+	for(i=0;i<l;i++)
+		f += C_times_loss(i, wx[i]);
+	f = f + 0.5 * wTw;
+
+	current_f = f;
+	return(f);
+}
+
+int l2r_erm_fun::get_nr_variable(void)
+{
+	return prob->n;
+}
+
+float l2r_erm_fun::line_search(float *d, float *w, float *g, float alpha, float *f)
+{
+	int i;
+	int l = prob->l;
+	float dTd = 0;
+	float wTd = 0;
+	float gTd = 0;
+	float eta = 0.01;
+	int w_size = get_nr_variable();
+	int max_num_linesearch = 1000;
+	Xv(d, tmp);
+
+	for (i=0;i<w_size;i++)
+	{
+		dTd += d[i] * d[i];
+		wTd += d[i] * w[i];
+		gTd += d[i] * g[i];
+	}
+	int num_linesearch = 0;
+	for(num_linesearch=0; num_linesearch < max_num_linesearch; num_linesearch++)
+	{
+		float loss = 0;
+		for(i=0;i<l;i++)
+		{
+			float inner_product = tmp[i] * alpha + wx[i];
+			loss += C_times_loss(i, inner_product);
+		}
+		*f = loss + (alpha * alpha * dTd + wTw) / 2.0 + alpha * wTd;
+		if (*f - current_f <= eta * alpha * gTd)
+		{
+			for (i=0;i<l;i++)
+				wx[i] += alpha * tmp[i];
+			break;
+		}
+		else
+			alpha *= 0.5;
+	}
+
+	if (num_linesearch >= max_num_linesearch)
+	{
+		*f = current_f;
+		return 0;
+	}
+
+	wTw += alpha * alpha * dTd + 2* alpha * wTd;
+	current_f = *f;
+	return alpha;
+}
+
+void l2r_erm_fun::Xv(float *v, float *Xv)
+{
+	int i;
+	int l=prob->l;
+	//feature_node **x=prob->x;
+	SMatF *x = prob->x;
+
+	for(i=0;i<l;i++)
+		Xv[i]=sparse_operator::dot(v, x->size[i], x->data[i]);
+		//Xv[i]=sparse_operator::dot(v, x[i]);
+}
+
+void l2r_erm_fun::XTv(float *v, float *XTv)
+{
+	int i;
+	int l=prob->l;
+	int w_size=get_nr_variable();
+	SMatF *x = prob->x;
+
+	for(i=0;i<w_size;i++)
+		XTv[i]=0;
+	for(i=0;i<l;i++)
+        // need modification...
+		//sparse_operator::axpy(v[i], x[i], XTv);
+		sparse_operator::axpy(v[i], x->size[i], x->data[i], XTv);
+}
+
+class l2r_lr_fun: public l2r_erm_fun
+{
+public:
+	l2r_lr_fun(const subproblem *prob, float *C);
+	~l2r_lr_fun();
+
+	void grad(float *w, float *g);
+	void Hv(float *s, float *Hs);
+
+private:
+	float *D;
+	float C_times_loss(int i, float wx_i);
+};
+
+l2r_lr_fun::l2r_lr_fun(const subproblem *prob, float *C):
+	l2r_erm_fun(prob, C)
+{
+	int l=prob->l;
+	D = new float[l];
+}
+
+l2r_lr_fun::~l2r_lr_fun()
+{
+	delete[] D;
+    D = nullptr;
+}
+
+float l2r_lr_fun::C_times_loss(int i, float wx_i)
+{
+	float ywx_i = wx_i * prob->y[i];
+	if (ywx_i >= 0)
+		return C[i]*log(1 + exp(-ywx_i));
+	else
+		return C[i]*(-ywx_i + log(1 + exp(ywx_i)));
+}
+
+void l2r_lr_fun::grad(float *w, float *g)
+{
+	int i;
+	int *y=prob->y;
+	int l=prob->l;
+	int w_size=get_nr_variable();
+
+	for(i=0;i<l;i++)
+	{
+		tmp[i] = 1/(1 + exp(-y[i]*wx[i]));
+		D[i] = tmp[i]*(1-tmp[i]);
+		tmp[i] = C[i]*(tmp[i]-1)*y[i];
+	}
+	XTv(tmp, g);
+
+	for(i=0;i<w_size;i++)
+		g[i] = w[i] + g[i];
+}
+
+void l2r_lr_fun::Hv(float *s, float *Hs)
+{
+	int i;
+	int l=prob->l;
+	int w_size=get_nr_variable();
+	float *wa = new float[l];
+	//feature_node **x=prob->x;
+    SMatF *x = prob->x;
+
+	for(i=0;i<w_size;i++)
+		Hs[i] = 0;
+	for(i=0;i<l;i++)
+	{
+		//feature_node * const xi=x[i];
+        pairIF *xi = x->data[i];
+        int szi = x->size[i];
+        // need modification
+		//wa[i] = sparse_operator::dot(s, xi);
+		wa[i] = sparse_operator::dot(s, szi, xi);
+
+		wa[i] = C[i]*D[i]*wa[i];
+
+        // need modification
+		//sparse_operator::axpy(wa[i], xi, Hs);
+		sparse_operator::axpy(wa[i], szi, xi, Hs);
+	}
+	for(i=0;i<w_size;i++)
+		Hs[i] = s[i] + Hs[i];
+	delete[] wa;
+    wa = nullptr;
+}
+
+class l2r_l2_svc_fun: public l2r_erm_fun
+{
+public:
+	l2r_l2_svc_fun(const subproblem *prob, float *C);
+	~l2r_l2_svc_fun();
+
+	void grad(float *w, float *g);
+	void Hv(float *s, float *Hs);
+
+protected:
+	void subXTv(float *v, float *XTv);
+
+	int *I;
+	int sizeI;
+
+private:
+	float C_times_loss(int i, float wx_i);
+};
+
+l2r_l2_svc_fun::l2r_l2_svc_fun(const subproblem *prob, float *C):
+	l2r_erm_fun(prob, C)
+{
+	I = new int[prob->l];
+}
+
+l2r_l2_svc_fun::~l2r_l2_svc_fun()
+{
+	delete[] I;
+    I = nullptr;
+}
+
+float l2r_l2_svc_fun::C_times_loss(int i, float wx_i)
+{
+		float d = 1 - prob->y[i] * wx_i;
+		if (d > 0)
+			return C[i] * d * d;
+		else
+			return 0;
+}
+
+void l2r_l2_svc_fun::grad(float *w, float *g)
+{
+	int i;
+	int *y=prob->y;
+	int l=prob->l;
+	int w_size=get_nr_variable();
+
+	sizeI = 0;
+	for (i=0;i<l;i++)
+	{
+		tmp[i] = wx[i] * y[i];
+		if (tmp[i] < 1)
+		{
+			tmp[sizeI] = C[i]*y[i]*(tmp[i]-1);
+			I[sizeI] = i;
+			sizeI++;
+		}
+	}
+	subXTv(tmp, g);
+
+	for(i=0;i<w_size;i++)
+		g[i] = w[i] + 2*g[i];
+}
+
+void l2r_l2_svc_fun::Hv(float *s, float *Hs)
+{
+	int i;
+	int w_size=get_nr_variable();
+	float *wa = new float[sizeI];
+	//feature_node **x=prob->x;
+    SMatF *x = prob->x;
+
+	for(i=0;i<w_size;i++)
+		Hs[i]=0;
+	for(i=0;i<sizeI;i++)
+	{
+		//feature_node * const xi=x[I[i]];
+        pairIF *xi = x->data[I[i]];
+        int szi = x->size[I[i]];
+		wa[i] = sparse_operator::dot(s, szi, xi);
+
+		wa[i] = C[I[i]]*wa[i];
+
+		//sparse_operator::axpy(wa[i], xi, Hs);
+		sparse_operator::axpy(wa[i], szi, xi, Hs);
+	}
+	for(i=0;i<w_size;i++)
+		Hs[i] = s[i] + 2*Hs[i];
+	delete[] wa;
+    wa = nullptr;
+}
+
+void l2r_l2_svc_fun::subXTv(float *v, float *XTv)
+{
+	int i;
+	int w_size=get_nr_variable();
+	//feature_node **x=prob->x;
+    SMatF *x = prob->x;
+
+	for(i=0;i<w_size;i++)
+		XTv[i]=0;
+	for(i=0;i<sizeI;i++)
+		//sparse_operator::axpy(v[i], x[I[i]], XTv);
+		sparse_operator::axpy(v[i], x->size[I[i]], x->data[I[i]], XTv);
+}
+
+//===========================================================
+
+
 #define GETI(i) (y[i]+1)
 typedef signed char schar;
 
-//void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn)
+//void solve_l2r_lr_dual(const problem *prob, float *w, float eps, float Cp, float Cn)
 void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
   _int l = X_Xf->nc;
   _int w_size = X_Xf->nr;
   _int i, s, iter = 0;
 
-  _double *xTx = new _double[l];
+  _float *xTx = new _float[l];
   _int max_iter = svm_iter;
   _int *index = new _int[l];
-  _double *alpha = new _double[2*l]; // store alpha and C - alpha
+  _float *alpha = new _float[2*l]; // store alpha and C - alpha
   _int max_inner_iter = 100; // for inner Newton
-  _double innereps = 1e-2;
-  _double innereps_min = min(1e-8, (_double)eps);
-  _double upper_bound[3] = {Cn, 0, Cp};
+  _float innereps = 1e-2;
+  _float innereps_min = min((_float)1e-8, (_float)eps);
+  _float upper_bound[3] = {Cn, 0, Cp};
 
   _int* size = X_Xf->size;
   pairIF** data = X_Xf->data;
@@ -194,7 +537,7 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
   // alpha[2*i] + alpha[2*i+1] = upper_bound[GETI(i)]
   for(i=0; i<l; i++)
     {
-      alpha[2*i] = min(0.001*upper_bound[GETI(i)], 1e-8);
+      alpha[2*i] = min((_float)0.001*upper_bound[GETI(i)], (_float)1e-8);
       alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
     }
 
@@ -221,15 +564,15 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
 	}
 
       _int newton_iter = 0;
-      _double Gmax = 0;
+      _float Gmax = 0;
       for (s=0; s<l; s++)
 	{
 	  i = index[s];
 	  const _int yi = y[i];
-	  _double C = upper_bound[GETI(i)];
-	  _double ywTx = 0, xisq = xTx[i];
+	  _float C = upper_bound[GETI(i)];
+	  _float ywTx = 0, xisq = xTx[i];
 	  ywTx = yi*sparse_operator::dot( w, size[i], data[i] );
-	  _double a = xisq, b = ywTx;
+	  _float a = xisq, b = ywTx;
 
 	  // Decide to minimize g_1(z) or g_2(z)
 	  _int ind1 = 2*i, ind2 = 2*i+1, sign = 1;
@@ -241,22 +584,22 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
 	    }
 
 	  //  g_t(z) = z*log(z) + (C-z)*log(C-z) + 0.5a(z-alpha_old)^2 + sign*b(z-alpha_old)
-	  _double alpha_old = alpha[ind1];
-	  _double z = alpha_old;
+	  _float alpha_old = alpha[ind1];
+	  _float z = alpha_old;
 	  if(C - z < 0.5 * C)
 	    z = 0.1*z;
-	  _double gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
+	  _float gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
 	  Gmax = max(Gmax, fabs(gp));
 
 	  // Newton method on the sub-problem
-	  const _double eta = 0.1; // xi in the paper
+	  const _float eta = 0.1; // xi in the paper
 	  _int inner_iter = 0;
 	  while (inner_iter <= max_inner_iter)
 	    {
 	      if(fabs(gp) < innereps)
 		break;
-	      _double gpp = a + C/(C-z)/z;
-	      _double tmpz = z - gp/gpp;
+	      _float gpp = a + C/(C-z)/z;
+	      _float tmpz = z - gp/gpp;
 	      if(tmpz <= 0)
 		z *= eta;
 	      else // tmpz in (0, C)
@@ -285,7 +628,7 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
 	break;
 
       if(newton_iter <= l/10)
-	innereps = max(innereps_min, 0.1*innereps);
+	innereps = max(innereps_min, (_float)0.1*innereps);
 
     }
 
@@ -296,7 +639,7 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
 
     // calculate objective value
 
-    double v = 0;
+    float v = 0;
     for(i=0; i<w_size; i++)
     v += w[i] * w[i];
     v *= 0.5;
@@ -307,10 +650,64 @@ void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, 
   */
 
   delete [] xTx;
+  xTx = nullptr;
   delete [] alpha;
+  alpha = nullptr;
   //delete [] y;
   delete [] index;
+  index = nullptr;
 }
+
+
+void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
+{
+    _int l = X_Xf->nc;
+    _int w_size = X_Xf->nr;
+    //cout << "l, w_size: " << l << ',' << w_size << endl;
+    float *C = new float[l];
+    //cout << "size of C: " << sizeof(C) << endl;
+    for(int i = 0; i < l; i++)
+    {
+        if(y[i] > 0)
+            C[i] = Cp;
+        else
+            C[i] = Cn;
+    }
+
+    float eps_cg = 0.1;
+
+    int pos = 0;
+	int neg = 0;
+	for(int i=0;i<l;i++)
+		if(y[i] > 0)
+			pos++;
+	neg = l - pos;
+    eps = 1;
+    _float eps2 = 0.0001;
+    float primal_solver_tol = eps*max(min(pos, neg), 1)/l;
+	primal_solver_tol = min(primal_solver_tol, eps2);
+
+    subproblem *prob = new subproblem();
+    prob->l = l;
+    prob->n = w_size;
+    prob->y = y;
+    prob->x = X_Xf;
+    prob->bias = -1;
+
+    Function *fun_obj=NULL;
+    fun_obj=new l2r_l2_svc_fun(prob, C);
+    TRON tron_obj(fun_obj, primal_solver_tol, eps_cg);
+    //tron_obj.set_print_string(liblinear_print_string);
+    clock_t start_time = clock();
+    tron_obj.tron(w, start_time);
+    delete fun_obj;
+    fun_obj = nullptr;
+    delete prob;
+    prob = nullptr;
+    delete[] C;
+    C = nullptr;
+}
+
 
 void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
@@ -345,8 +742,8 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
   // 0 <= alpha[i] <= upper_bound[GETI(i)]
 
   for(i=0; i<l; i++) {
-      //alpha[i] = 0;
-      alpha[i] = min(0.001*upper_bound[GETI(i)], 1e-8);
+      alpha[i] = 0;
+      //alpha[i] = min(0.001*upper_bound[GETI(i)], 1e-8);
   }
 
   if (reset_w) {
@@ -424,10 +821,10 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
 
 	  if(fabs(PG) > 1.0e-12)
 	    {
-	      _float alpha_old = alpha[i];
-	      alpha[i] = min(max(alpha[i] - G/QD[i], (_float)0.0), C);
-	      d = (alpha[i] - alpha_old)*yi;
-	      sparse_operator::axpy(d, size[i], data[i], w);
+            _float alpha_old = alpha[i];
+            alpha[i] = min(max(alpha[i] - G/QD[i], (_float)0.0), C);
+            d = (alpha[i] - alpha_old)*yi;
+            sparse_operator::axpy(d, size[i], data[i], w);
 	    }
 	}
 
@@ -456,8 +853,11 @@ void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp,
   // calculate objective value
 
   delete [] QD;
+  QD = nullptr;
   delete [] alpha;
+  alpha = nullptr;
   delete [] index;
+  index = nullptr;
 }
 
 
@@ -485,21 +885,31 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
 
   for( _int l=0; l<num_Y; l++ )
     {
+      cout << "fine-tuning the " << l << "-th out of " << num_Y << " edges" << endl;
+      //cout << trn_Y_X->size[l] << endl;
       for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
         y[ trn_Y_X->data[l][i].first ] = +1;
 
+      //cout << "initialize y done...\n";
       /*
        * initialized w
        */
+      //  cout << prev_w_mat->size[l] << endl;
       for (int i = 0; i < prev_w_mat->size[l]; ++ i) {
+          if (prev_w_mat->data[l][i].first >= num_Xf) {
+              cout << prev_w_mat->data[l][i].first << ' ' << num_Xf << endl;
+          }
           w[prev_w_mat->data[l][i].first] = prev_w_mat->data[l][i].second;
       }
 
+      //cout << "solove svc begins....\n";
       bool reset_w = false;
       if( param.septype == L2R_L2LOSS_SVC )
-        solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
+        //solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
+        solve_L2R_L2LOSS_SVC( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
       else if( param.septype == L2R_LR )
         solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, finetune_iter, reset_w );
+      //cout << "solove svc ends....\n";
 
       w_mat->data[ l ] = new pairIF[ num_Xf ]();
       _int siz = 0;
@@ -513,11 +923,21 @@ SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param&
 
       for( _int i=0; i < trn_Y_X->size[ l ]; i++ )
         y[ trn_Y_X->data[l][i].first ] = -1;
+
     }
 
-  delete prev_w_mat;
-  delete [] y;
-  delete [] w;
+  if (prev_w_mat != nullptr) {
+    delete prev_w_mat;
+    prev_w_mat = nullptr;
+  }
+  if (y != nullptr) {
+    delete [] y;
+    y = nullptr;
+  }
+  if (w != nullptr) {
+    delete [] w;
+    w = nullptr;
+  }
 
   return w_mat;
 }
@@ -568,17 +988,19 @@ SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no )
     }
 
   delete [] y;
+  y = nullptr;
   delete [] w;
+  w = nullptr;
 
   return w_mat;
 }
 
 
 
-void reindex_rows( SMatF* mat, _int nr, VecI& rows )
+void reindex_rows( SMatF* mat, _int nr, VecI& rows, int base_no=0 )
 {
   mat->nr = nr;
-  for( _int i=0; i<mat->nc; i++ )
+  for( _int i=base_no; i<mat->nc; i++ )
     {
       for( _int j=0; j<mat->size[i]; j++ )
         mat->data[i][j].first = rows[ mat->data[i][j].first ];
@@ -706,7 +1128,7 @@ SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition, int base_no )
 void shrink_mat( SMatF* mat, VecI& cols, SMatF*& s_mat, VecI& rows )
 {
   // take cols and rows of mat, save it in s_mat
-  // function as numpy.array slicing
+  // Function as numpy.array slicing
   _int nc = mat->nc;
   _int nr = mat->nr;
   _int s_nc = cols.size();
@@ -768,7 +1190,7 @@ void train_leaf_svms( Node* node, SMatF* X_Xf, SMatF* Y_X, _int nr, VecI& n_Xf, 
     int base_no = 0;
     if (node->w != nullptr) base_no = node->w->nc;
     SMatF* w_mat = svms( X_Xf, Y_X, param, base_no );
-    reindex_rows( w_mat, nr, n_Xf );
+    reindex_rows( w_mat, nr, n_Xf, 0);
 
   if (base_no > 0) {
     Realloc(base_no, base_no + w_mat->nc, node->w->size);
@@ -778,12 +1200,14 @@ void train_leaf_svms( Node* node, SMatF* X_Xf, SMatF* Y_X, _int nr, VecI& n_Xf, 
       node->w->data[i] = w_mat->data[i - base_no];
     }
     node->w->nc += w_mat->nc;
+    delete[] w_mat->size;
+    w_mat->size = nullptr;
+    delete[] w_mat->data;
+    w_mat->data = nullptr;
   } else {
       node->w = w_mat;
   }
 
-  //delete[] w_mat->size;
-  //delete[] w_mat->data;
   w_mat = nullptr;
 }
 
@@ -991,13 +1415,14 @@ void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _i
     cout << "partition_to_assign_mat done" << endl;
 
   SMatF* w_mat = svms( X_Xf, assign_mat, param, 0 );
-  reindex_rows( w_mat, nr, n_Xf );
+  reindex_rows( w_mat, nr, n_Xf, 0 );
   node->w = w_mat;
 
   if(KMEANS_DEBUG)
     cout << "svm done" << endl;
 
   delete assign_mat;
+  assign_mat = nullptr;
 }
 
 ///////////////////// Modified_code_start /////////////////////
@@ -1130,12 +1555,15 @@ Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param& param
 	}
 
       delete n_trn_X_Xf;
+      n_trn_X_Xf = nullptr;
       delete n_trn_Y_X;
+      n_trn_Y_X = nullptr;
 
       if(n_cent_mat != NULL) {
 	if(TR_DEBUG)
 	  cout << "deleting n_cent_mat" << endl;
 	delete n_cent_mat;
+    n_cent_mat = nullptr;
       }
 
       if(TR_DEBUG)
@@ -1145,6 +1573,7 @@ Tree* train_tree( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param& param
   tree->num_Y = num_Y;
 
   delete [] mask;
+  mask = nullptr;
 
   return tree;
 }
@@ -1184,6 +1613,7 @@ void train_trees_thread( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, Param
 
       timer.resume();
       delete tree;
+      tree = nullptr;
 
       cout<<"tree "<<i<<" training completed"<<endl;
       timer.stop();
@@ -1262,11 +1692,14 @@ void train_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& param
 
   timer.resume();
   delete trn_Y_X;
+  trn_Y_X = nullptr;
   delete cent_mat;
+  cent_mat = nullptr;
 
   *t_time += timer.stop();
   train_time = *t_time;
   delete t_time;
+  t_time = nullptr;
 }
 
 thread_local float* densew;
@@ -1510,6 +1943,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param, int lft, int rgt
   score_mat->nr = num_Y;
 
   delete id_type_mat;  // release memory!
+  id_type_mat = nullptr;
   return score_mat;
 }
 
@@ -1540,8 +1974,10 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
     }
 
     delete tree;
+    tree = nullptr;
     cout << "free tree done..." << endl;
     delete tree_score_mat;
+    tree_score_mat = nullptr;
     cout << "free tree score mat done..." << endl;
 
     cout<<"tree "<<i<<" predicting completed"<<endl;
@@ -1549,6 +1985,7 @@ void predict_trees_thread( SMatF* tst_X_Xf, SMatF* score_mat, Param param, _int 
   }
 
   delete [] densew;
+  densew = nullptr;
 
   {
     lock_guard<mutex> lock(mtx);
@@ -1600,9 +2037,11 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
   *p_time += timer.stop();
   prediction_time = *p_time;
   delete p_time;
+  p_time = nullptr;
 
   model_size = *m_size;
   delete m_size;
+  m_size= nullptr;
 
 
   ifstream fin(model_dir + "/lbl_idx");

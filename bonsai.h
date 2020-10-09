@@ -53,6 +53,14 @@ using namespace std;
 enum _Septype { L2R_L2LOSS_SVC=0, L2R_LR };
 enum _Parttype { KMEANS=0, EXTERNAL };
 
+struct subproblem
+{
+	int l, n;
+	int *y;
+	SMatF *x;
+	double bias;            /* < 0 if no bias term */
+};
+
 class Node
 {
  public:
@@ -64,6 +72,7 @@ class Node
   VecI Y;
   VecF Y_cent;
   SMatF* w;
+  //float *alpha
   VecIF X; // store the instance ids to predict (for test data), (id, score)
 
   Node()
@@ -378,9 +387,10 @@ void split_node_kmeans( Node* node, SMatF* X_Xf, SMatF* Y_X, SMatF* cent_mat, _i
 void shrink_data_matrices_with_cent_mat( SMatF* trn_X_Xf, SMatF* trn_Y_X, SMatF* cent_mat, VecI& n_Y, Param& param, SMatF*& n_trn_X_Xf, SMatF*& n_trn_Y_X, SMatF*& n_cent_mat, VecI& n_X, VecI& n_Xf, VecI& n_cXf );
 void shrink_data_matrices( SMatF* trn_X_Xf, SMatF* trn_Y_X, VecI& n_Y, Param& param, SMatF*& n_trn_X_Xf, SMatF*& n_trn_Y_X, VecI& n_X, VecI& n_Xf);
 void squeeze_partition_array(vector<_int> &partition);
+void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w );
 void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w );
 void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w );
-void reindex_rows( SMatF* mat, _int nr, VecI& rows );
+void reindex_rows( SMatF* mat, _int nr, VecI& rows, int base_no );
 SMatF* partition_to_assign_mat( SMatF* Y_X, VecI& partition, int base_no );
 SMatF* finetune_svms( SMatF *prev_w_mat, SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int finetune_iter, int nr, VecI &n_Xf );
 SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no );

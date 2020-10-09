@@ -1,4 +1,5 @@
 #include "bonsai.h"
+//#include "tron.h"
 #include <vector>
 #include <algorithm>
 
@@ -51,6 +52,8 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
     vector<Node*> &nodes = tree->nodes;
     _int max_n = max( max( max( num_X+1, num_Xf+1 ), num_Y+1 ), num_XY+1);
     mask = new _bool[ max_n ]();
+    for (int i = 0; i < max_n; ++ i) mask[i] = false;
+
     float *node_cent = new float[cent_mat->nr];
 
     for (int cur_node = 1; cur_node < nodes.size(); ++ cur_node) {
@@ -173,6 +176,7 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
         } else {
                 // classifier normalization
                 //node->w->unit_normalize_columns();
+                //
             VecI partition(node->Y.size());
             for (int j = 0; j < node->children.size(); ++ j) {
                 int ch = node->children[j];
@@ -183,23 +187,31 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
             delete node->w;
             node->w = svms(n_trn_X_Xf, assign_mat, param, 0);
             */
+            //cout << trn_X_Xf->nr << ' ' << trn_X_Xf->nc << endl;
+            //cout << n_trn_X_Xf->nr << ' ' << n_trn_X_Xf->nc << endl;
+            reindex_rows( n_trn_X_Xf, num_Xf, n_Xf, 0 );
             SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0);
-            node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 3, num_Xf, n_Xf );
-            reindex_rows( node->w, num_Xf, n_Xf );
+            node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 2, num_Xf, n_Xf );
+            //reindex_rows( node->w, num_Xf, n_Xf );
             delete assign_mat;
+            assign_mat = nullptr;
         }
 
-
         delete n_trn_X_Xf;
+        n_trn_X_Xf = nullptr;
         delete n_trn_Y_X;
+        n_trn_Y_X = nullptr;
         delete n_cent_mat;
+        n_cent_mat = nullptr;
     }
 
     //cout << "leaf partition done..." << endl;
     // rearrange nodes
     //sort_nodes(nodes);
-    delete node_cent;
+    delete[] node_cent;
+    node_cent = nullptr;
     delete[] mask;
+    mask = nullptr;
     //cout << "nodes sorting done..." << endl;
 }
 
@@ -220,6 +232,7 @@ void update_trees_thread( SMatF* trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Para
 
         timer.resume();
         delete tree;
+        tree = nullptr;
 
         cout<<"tree "<<i<<" training completed"<<endl;
         timer.stop();
@@ -297,9 +310,12 @@ void update_trees( SMatF* trn_X_Xf, SMatF* trn_X_Y, SMatF* trn_X_XY, Param& para
 
     timer.resume();
     delete trn_Y_X;
+    trn_Y_X = nullptr;
     delete cent_mat;
+    cent_mat = nullptr;
 
     *t_time += timer.stop();
     train_time = *t_time;
     delete t_time;
+    t_time = nullptr;
 }
