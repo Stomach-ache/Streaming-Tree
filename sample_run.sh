@@ -15,7 +15,7 @@ tst_lbl_file="${data_dir}/tst_X_Y.txt"
 trn_score_file="${results_dir}/trn_score_mat.txt"
 tst_score_file="${results_dir}/tst_score_mat.txt"
 init_ratio=0.5
-batch_size=100
+batch_size=200
 rand_seed=95
 
 if [[ "$dataset" == "eurlex" ]]; then
