@@ -247,7 +247,7 @@ float l2r_erm_fun::line_search(float *d, float *w, float *g, float alpha, float 
 	float gTd = 0;
 	float eta = 0.01;
 	int w_size = get_nr_variable();
-	int max_num_linesearch = 1000;
+	int max_num_linesearch = 100;
 	Xv(d, tmp);
 
 	for (i=0;i<w_size;i++)
@@ -674,6 +674,10 @@ void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float C
             C[i] = Cn;
     }
 
+    if (reset_w) {
+        for (int i = 0; i < w_size; ++ i) w[i] = 0;
+    }
+
     float eps_cg = 0.1;
 
     int pos = 0;
@@ -682,7 +686,7 @@ void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float C
 		if(y[i] > 0)
 			pos++;
 	neg = l - pos;
-    eps = 1;
+    eps = 0.01;
     _float eps2 = 0.0001;
     float primal_solver_tol = eps*max(min(pos, neg), 1)/l;
 	primal_solver_tol = min(primal_solver_tol, eps2);
@@ -969,6 +973,7 @@ SMatF* svms( SMatF* trn_X_Xf, SMatF* trn_Y_X, Param& param, int base_no )
         y[ trn_Y_X->data[l][i].first ] = +1;
 
       if( param.septype == L2R_L2LOSS_SVC )
+        //solve_L2R_L2LOSS_SVC( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
         solve_l2r_l1l2_svc( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
       else if( param.septype == L2R_LR )
         solve_l2r_lr_dual( trn_X_Xf, y, w, eps, Cp, Cn, param.svm_iter, true );
@@ -1249,6 +1254,7 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K, int tree_no) {
   int sign = 1;
   //if (tree_no == 2) sign = -1;
 
+  K = min(K, nc / 3);
   vector<_int> c(K);
 
     c = pick(nc, K);
@@ -1790,7 +1796,7 @@ void update_next_level( _int b, vector<Node*>& nodes, SMatF* score_mat, SMatI* i
     {
       _int* size = score_mat->size;
       pairIF** data = score_mat->data;
-      _int beam_size = param.beam_size;
+      _int beam_size = max(1000, param.beam_size);
       _int num_X = score_mat->nc; // num. cols = num. testing points
 
       for( _int i=0; i<num_X; i++ ) // each testing point
@@ -1819,17 +1825,15 @@ void update_next_level( _int b, vector<Node*>& nodes, SMatF* score_mat, SMatI* i
 	      unzip(zipped, score_mat->data[i], id_type_mat->data[i], score_mat->size[i]);
 	      score_mat->size[i] = beam_size; // each testing point only records top `beam_size` scores/labels
 	    }
-	  for( _int j=0; j<size[i]; j++ ) // for each child node/label
+	  for( int j = 0; j<size[i]; j++ ) // for each child node/labl
 	    {
 	      // need to check if jth target is a node or a label
 	      if(id_type_mat->data[i][j].second == 1) {
-		// j is a node, pass instance i to node j
-		assert(data[i][j].first < nodes.size());
-		Node* node = nodes[ data[i][j].first ];
-		node->X.push_back( make_pair( i, data[i][j].second ) ); // put the score in
+            // j is a node, pass instance i to node j
+            assert(data[i][j].first < nodes.size());
+            Node* node = nodes[ data[i][j].first ];
+            node->X.push_back( make_pair( i, data[i][j].second ) ); // put the score in
 	      }
-
-
 	    }
 	  // does not release the memory
 	  // but sets the "head" to begining
@@ -1850,7 +1854,7 @@ void exponentiate_scores( SMatF* mat )
   for( _int i=0; i<nc; i++ )
     {
       for( _int j=0; j<size[i]; j++)
-	data[i][j].second = exp( data[i][j].second );
+        data[i][j].second = exp( data[i][j].second );
 
       sort( data[i], data[i]+size[i], comp_pair_by_first<_int,_float> );
     }
@@ -1874,6 +1878,8 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param, int lft, int rgt
       leaf_sizes.push_back(n->Y.size());
 
   sort(leaf_sizes.rbegin(), leaf_sizes.rend()); // sort in DESC
+
+  beam_size = leaf_sizes.size();
 
   _int buffer_size = 0; // size of array to score label scores
   // sum up top k sizes of node labels
@@ -2079,19 +2085,18 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
           score_mat->data[i] = nullptr;
       } else {
       */
-
-          for (int j = 0; j < score_mat->size[i]; ++ j) {
+        for (int j = 0; j < score_mat->size[i]; ++ j) {
             if (score_mat->data[i][j].first < lft || score_mat->data[i][j].first >= rgt)
-              score_mat->data[i][j].second = -1;
+                score_mat->data[i][j].second = 0;
             score_mat->data[i][j].first = lbl_idx[score_mat->data[i][j].first];
-          }
-            sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
+        }
+        sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
 
-          _int newsiz = min( siz, 3000 ); // report the top 100?
-          Realloc( siz, newsiz, score_mat->data[i] );
-          score_mat->size[i] = newsiz;
-          sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id
+        _int newsiz = min( siz, 3000 ); // report the top 100?
+        Realloc( siz, newsiz, score_mat->data[i] );
+        score_mat->size[i] = newsiz;
+        sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id
     }
 
-  return score_mat;
+    return score_mat;
 }

@@ -122,6 +122,7 @@ int main(int argc, char* argv[])
   Param param = parse_param( argc-8, argv+8 );
   param.num_Xf = trn_X_Xf->nr;
   param.num_Y = trn_X_Y->nr;
+  //param.beam_size = 100;
   param.write( model_dir+"/param" );
 
   // modified_code starts....2020.09.11
@@ -171,7 +172,7 @@ int main(int argc, char* argv[])
 
   tmp = tmp2;
   tmp2 = nullptr;
-  cout << tmp->nc << ' ' << tmp->nr << endl;
+  //cout << tmp->nc << ' ' << tmp->nr << endl;
 
   /*
   for (int i = 0; i < tmp->nc; ++ i) lbl_freq[i] = tmp->size[i];
@@ -197,7 +198,7 @@ int main(int argc, char* argv[])
       i = min(i, num_lbl);
       cout << "start training using labels from " << base_no << " to " << i << endl;
       tmp->nc = i;
-      cout << "do matrix transpose..." << endl;
+      //cout << "do matrix transpose..." << endl;
       trn_X_Y = tmp->transpose();
       cout << "ready to train ...." << endl;
       if (init) {

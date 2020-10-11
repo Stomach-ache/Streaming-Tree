@@ -182,17 +182,18 @@ void update_tree(SMatF *trn_X_Xf, SMatF *trn_Y_X, SMatF *cent_mat, Tree *tree, P
                 int ch = node->children[j];
                 for (int l: nodes[ch]->Y) partition[l] = j;
             }
+
             /*
             SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0 );
             delete node->w;
             node->w = svms(n_trn_X_Xf, assign_mat, param, 0);
+            reindex_rows( node->w, num_Xf, n_Xf, 0 );
             */
             //cout << trn_X_Xf->nr << ' ' << trn_X_Xf->nc << endl;
             //cout << n_trn_X_Xf->nr << ' ' << n_trn_X_Xf->nc << endl;
             reindex_rows( n_trn_X_Xf, num_Xf, n_Xf, 0 );
             SMatF* assign_mat = partition_to_assign_mat( n_trn_Y_X, partition, 0);
             node->w = finetune_svms( node->w, n_trn_X_Xf, assign_mat, param, 2, num_Xf, n_Xf );
-            //reindex_rows( node->w, num_Xf, n_Xf );
             delete assign_mat;
             assign_mat = nullptr;
         }

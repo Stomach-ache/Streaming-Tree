@@ -4,6 +4,7 @@ from evaluation import *
 from sklearn.preprocessing import MultiLabelBinarizer
 from scipy.sparse.linalg import norm
 import argparse
+from sklearn.metrics import roc_auc_score, average_precision_score, coverage_error, hamming_loss, f1_score
 from xclib.data import data_utils
 
 parser = argparse.ArgumentParser('get_all_metrics')
@@ -38,6 +39,9 @@ Ytr = data_utils.read_sparse_file(args.trnYfile, force_header=True)
 Yte = data_utils.read_sparse_file(args.tstYfile, force_header=True)
 prob = data_utils.read_sparse_file(args.score, force_header=True)
 
+# dense label matrix
+ground_truth = Yte.toarray().astype(np.int32)
+
 mlb = MultiLabelBinarizer(range(Yte.shape[1]), sparse_output=True)
 targets = mlb.fit_transform(csr2list(Yte))
 train_labels = csr2list(Ytr)
@@ -63,15 +67,15 @@ for i in range(num_sample):
         y = np.array(list(y) + [0] * (topk-len(y)))
     res[i] = prob[i].indices[y]
 
-print (Ytr.shape)
-print (Yte.shape)
-print (res.shape)
+#print (Ytr.shape)
+#print (Yte.shape)
+#print (res.shape)
 #res = np.array(csr2list(res))
 
 print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
-print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
-print('PSPrecision@1,3,5:', get_psp_1(res, targets, inv_w, mlb), get_psp_3(res, targets, inv_w, mlb), get_psp_5(res, targets, inv_w, mlb))
-print('PSnDCG@1,3,5:', get_psndcg_1(res, targets, inv_w, mlb), get_psndcg_3(res, targets, inv_w, mlb), get_psndcg_5(res, targets, inv_w, mlb))
+#print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
+#print('PSPrecision@1,3,5:', get_psp_1(res, targets, inv_w, mlb), get_psp_3(res, targets, inv_w, mlb), get_psp_5(res, targets, inv_w, mlb))
+#print('PSnDCG@1,3,5:', get_psndcg_1(res, targets, inv_w, mlb), get_psndcg_3(res, targets, inv_w, mlb), get_psndcg_5(res, targets, inv_w, mlb))
 
 
 with open(args.model_dir + '/lbl_idx', 'r') as fp:
@@ -84,6 +88,12 @@ batch_idx = 0
 batch_size = args.batch_size
 j = 0
 avg_p1 = 0
+avg_auc_macro = 0
+avg_prec = 0
+avg_cov = 0
+avg_ham = 0
+avg_f1_macro = 0
+avg_f1_inst = 0
 #avg_correct_unvalid = 0
 #tmp_targets = targets.copy()
 
@@ -95,12 +105,15 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
 
     lft = j
     rgt = base_no if batch_idx == 0 else min(j + batch_size, num_label)
-    active_lbl = set(lbl_idx[lft:rgt])
+    #active_lbl = set(lbl_idx[lft:rgt])
 
     '''
     valid_idx = []
     correct_unvalid = 0
     '''
+    tmp_prob = prob.toarray()
+    binary_pred = np.round([tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt)])
+    binary_pred = binary_pred.transpose()
     for i in range(num_sample):
         '''
         is_valid = False
@@ -125,7 +138,6 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
             continue
         if len(y) < topk:
             y = np.array(list(y) + [y[-1]] * (topk-len(y)))
-            res[i]
         res[i] = prob[i].indices[y]
 
     '''
@@ -134,12 +146,50 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
     print (len(res), targets.shape)
     #print (res[0])
     '''
-    if batch_idx > 0:
-        avg_p1 += get_p_1(res, targets, mlb)
     #    avg_correct_unvalid += correct_unvalid / (num_sample - len(valid_idx))
     #print (f'Old class detection Acc: {correct_unvalid / (num_sample - len(valid_idx))}')
+    #print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
+
+    gt = [ground_truth[:, lbl_idx[l]] for l in range(lft, rgt)]
+    gt = np.array(gt).transpose()
+    pred = [tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt)]
+    pred = np.array(pred).transpose()
+    #print (gt.shape, pred.shape)
+    rounded = 4
+    Coverage_error = round((coverage_error(gt, pred)) / (rgt-lft), rounded)
+    print (f'Coverage error: {Coverage_error}')
+
     print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
-    print(f'nDCG@1,3,5: {get_n_1(res, targets, mlb)}, {get_n_3(res, targets, mlb)}, {get_n_5(res, targets, mlb)}')
+
+    Hamming_loss = round(hamming_loss(gt, binary_pred), rounded)
+    print (f'Hamming loss: {Hamming_loss}')
+
+    F1_macro = round(f1_score(gt, binary_pred, average='macro', zero_division=0), rounded)
+    print (f'F1 macro: {F1_macro}')
+
+    F1_inst = round(f1_score(gt, binary_pred, average='samples', zero_division=0), rounded)
+    print (f'F1 instance: {F1_inst}')
+
+    if ground_truth.shape[1] < 10**3:
+        average_precision = round(average_precision_score(gt, pred), rounded)
+        print (f'Precision score: {average_precision}')
+
+        gt = [ground_truth[:, lbl_idx[l]] for l in range(lft, rgt) if sum(ground_truth[:, lbl_idx[l]]) > 0]
+        gt = np.array(gt).transpose()
+        pred = [tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt) if sum(ground_truth[:, lbl_idx[l]]) > 0]
+        pred = np.array(pred).transpose()
+        AUC_macro = round(roc_auc_score(gt, pred, average='macro'), rounded)
+        print (f'AUC_macro: {AUC_macro}')
+
+    if batch_idx > 0:
+        avg_p1 += get_p_1(res, targets, mlb)
+        if ground_truth.shape[1] < 10**3:
+            avg_auc_macro += AUC_macro
+            avg_prec += average_precision
+        avg_cov += Coverage_error
+        avg_ham += Hamming_loss
+        avg_f1_macro += F1_macro
+        avg_f1_inst += F1_inst
 
     if batch_idx == 0:
         j += base_no
@@ -147,9 +197,21 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
         j += batch_size
     batch_idx += 1
 
+
 avg_p1 /= (batch_idx - 1)
-#avg_correct_unvalid /= (batch_idx - 1)
-print (f'======Average Precision@1: {avg_p1}')
+avg_auc_macro /= (batch_idx - 1)
+avg_prec /= (batch_idx - 1)
+avg_cov /= (batch_idx - 1)
+avg_ham/= (batch_idx - 1)
+avg_f1_macro /= (batch_idx - 1)
+avg_f1_inst /= (batch_idx - 1)
+print ('======Average Coverage: {0:.4f}'.format(avg_cov))
+print ('======Average Precision@1: {0:.4f}'.format(avg_p1/100))
+print ('======Average Precision: {0:.4f}'.format(avg_prec))
+print ('======Average AUC_macro: {0:.4f}'.format(avg_auc_macro))
+print ('======Average Hamming Loss: {0:.4f}'.format(avg_ham))
+print ('======Average F1_macro: {0:.4f}'.format(avg_f1_macro))
+print ('======Average F1_instance: {0:.4f}'.format(avg_f1_inst))
 #print (f'======Average Correct Unvalid: {avg_correct_unvalid}')
 
 '''
