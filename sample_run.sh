@@ -1,9 +1,9 @@
 #!/bin/bash
 
-dataset="wiki10"
+#dataset="wiki10"
 #dataset="eurlex"
 #dataset="delicious"
-#dataset="mirflickr"
+dataset="mirflickr"
 data_dir="../sandbox/data/$dataset"
 results_dir="../sandbox/results/$dataset"
 model_dir="../sandbox/results/$dataset/model"
@@ -16,7 +16,7 @@ tst_lbl_file="${data_dir}/tst_X_Y.txt"
 trn_score_file="${results_dir}/trn_score_mat.txt"
 tst_score_file="${results_dir}/tst_score_mat.txt"
 init_ratio=0.5
-batch_size=1000
+batch_size=6
 rand_seed=95
 
 if [[ "$dataset" == "eurlex" ]]; then
@@ -37,7 +37,7 @@ mkdir -p $model_dir
 # NOTE: The usage of Bonsai for other datasets requires setting parameter `-m` to 2 for smaller datasets like EUR-Lex, Wikipedia-31K 
 #       and to 3 for larger datasets like Delicious-200K, WikiLSHTC-325K, Amazon-670K, Wikipedia-500K, Amazon-3M.
 
-#python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
+python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
 
 #'''
 ./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
@@ -45,7 +45,7 @@ mkdir -p $model_dir
     -s 0 \
     -t 3 \
     -w 100 \
-    -b 1.0 \
+    -b 1 \
     -c 1.0 \
     -m 2 \
     -f 0 \

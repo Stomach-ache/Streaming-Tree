@@ -4,7 +4,7 @@ from evaluation import *
 from sklearn.preprocessing import MultiLabelBinarizer
 from scipy.sparse.linalg import norm
 import argparse
-from sklearn.metrics import roc_auc_score, average_precision_score, coverage_error, hamming_loss, f1_score
+from sklearn.metrics import roc_auc_score, average_precision_score, coverage_error, hamming_loss, f1_score, label_ranking_loss
 from xclib.data import data_utils
 
 parser = argparse.ArgumentParser('get_all_metrics')
@@ -89,10 +89,13 @@ batch_size = args.batch_size
 j = 0
 avg_p1 = 0
 avg_auc_macro = 0
+avg_auc_micro = 0
 avg_prec = 0
 avg_cov = 0
+avg_rankloss = 0
 avg_ham = 0
 avg_f1_macro = 0
+avg_f1_micro = 0
 avg_f1_inst = 0
 #avg_correct_unvalid = 0
 #tmp_targets = targets.copy()
@@ -154,10 +157,13 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
     gt = np.array(gt).transpose()
     pred = [tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt)]
     pred = np.array(pred).transpose()
-    #print (gt.shape, pred.shape)
+    print (gt.shape, pred.shape)
     rounded = 4
     Coverage_error = round((coverage_error(gt, pred)) / (rgt-lft), rounded)
     print (f'Coverage error: {Coverage_error}')
+
+    Ranking_loss = round(label_ranking_loss(gt, pred), rounded)
+    print (f'Ranking loss: {Ranking_loss}')
 
     print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
 
@@ -166,6 +172,9 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
 
     F1_macro = round(f1_score(gt, binary_pred, average='macro', zero_division=0), rounded)
     print (f'F1 macro: {F1_macro}')
+
+    F1_micro = round(f1_score(gt, binary_pred, average='micro', zero_division=0), rounded)
+    print (f'F1 micro: {F1_micro}')
 
     F1_inst = round(f1_score(gt, binary_pred, average='samples', zero_division=0), rounded)
     print (f'F1 instance: {F1_inst}')
@@ -181,14 +190,20 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
         AUC_macro = round(roc_auc_score(gt, pred, average='macro'), rounded)
         print (f'AUC_macro: {AUC_macro}')
 
+    AUC_micro = round(roc_auc_score(gt, pred, average='micro'), rounded)
+    print (f'AUC_micro: {AUC_micro}')
+
     if batch_idx > 0:
         avg_p1 += get_p_1(res, targets, mlb)
         if ground_truth.shape[1] < 10**3:
             avg_auc_macro += AUC_macro
             avg_prec += average_precision
+        avg_auc_micro += AUC_micro
         avg_cov += Coverage_error
+        avg_rankloss += Ranking_loss
         avg_ham += Hamming_loss
         avg_f1_macro += F1_macro
+        avg_f1_micro += F1_micro
         avg_f1_inst += F1_inst
 
     if batch_idx == 0:
@@ -200,17 +215,23 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
 
 avg_p1 /= (batch_idx - 1)
 avg_auc_macro /= (batch_idx - 1)
+avg_auc_micro /= (batch_idx - 1)
 avg_prec /= (batch_idx - 1)
 avg_cov /= (batch_idx - 1)
+avg_rankloss /= (batch_idx - 1)
 avg_ham/= (batch_idx - 1)
 avg_f1_macro /= (batch_idx - 1)
+avg_f1_micro /= (batch_idx - 1)
 avg_f1_inst /= (batch_idx - 1)
 print ('======Average Coverage: {0:.4f}'.format(avg_cov))
+print ('======Average Ranking Loss: {0:.4f}'.format(avg_rankloss))
 print ('======Average Precision@1: {0:.4f}'.format(avg_p1/100))
 print ('======Average Precision: {0:.4f}'.format(avg_prec))
 print ('======Average AUC_macro: {0:.4f}'.format(avg_auc_macro))
+print ('======Average AUC_micro: {0:.4f}'.format(avg_auc_micro))
 print ('======Average Hamming Loss: {0:.4f}'.format(avg_ham))
 print ('======Average F1_macro: {0:.4f}'.format(avg_f1_macro))
+print ('======Average F1_micro: {0:.4f}'.format(avg_f1_micro))
 print ('======Average F1_instance: {0:.4f}'.format(avg_f1_inst))
 #print (f'======Average Correct Unvalid: {avg_correct_unvalid}')
 

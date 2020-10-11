@@ -250,7 +250,7 @@ TRON::TRON(const Function *fun_obj, float eps, float eps_cg, int max_iter)
 	this->fun_obj=const_cast<Function *>(fun_obj);
 	this->eps=eps;
 	this->eps_cg=eps_cg;
-	this->max_iter=min(max_iter, 100);
+	this->max_iter=min(max_iter, 1000);
 	tron_print_string = default_print;
 }
 

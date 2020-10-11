@@ -247,7 +247,7 @@ float l2r_erm_fun::line_search(float *d, float *w, float *g, float alpha, float 
 	float gTd = 0;
 	float eta = 0.01;
 	int w_size = get_nr_variable();
-	int max_num_linesearch = 100;
+	int max_num_linesearch = 1000;
 	Xv(d, tmp);
 
 	for (i=0;i<w_size;i++)
@@ -686,7 +686,7 @@ void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float C
 		if(y[i] > 0)
 			pos++;
 	neg = l - pos;
-    eps = 0.01;
+    eps = 0.001;
     _float eps2 = 0.0001;
     float primal_solver_tol = eps*max(min(pos, neg), 1)/l;
 	primal_solver_tol = min(primal_solver_tol, eps2);
