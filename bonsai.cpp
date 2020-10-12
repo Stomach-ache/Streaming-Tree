@@ -1738,11 +1738,13 @@ void update_svm_scores( Node* node, SMatF* tst_X_Xf, SMatF* score_mat, SMatI* id
 	_float prod = mult_d_s_vec( densew, tst_X_Xf->data[ inst ], tst_X_Xf->size[ inst ] ); // dot product
 	_float newvalue;
 	if( septype == L2R_L2LOSS_SVC )
-	  newvalue = - SQ( max( (_float)0.0, 1-prod ) ); // squared hinge loss
+	  //newvalue = (- SQ( max( (_float)0.0, 1-prod ) )); // squared hinge loss
+	  newvalue = exp (- SQ( max( (_float)0.0, 1-prod ) )); // squared hinge loss
 	else if( septype == L2R_LR )
 	  newvalue = - log( 1 + exp( -prod ) ); // logistic loss
 
-	newvalue += discount * oldvalue; // ??? what's `discount`?
+	newvalue *= oldvalue; // ??? what's `discount`?
+	//newvalue += discount * oldvalue; // ??? what's `discount`?
 
 	// update the "child" or "label"'s score
         //if (id_type == -1 && (target < lft || target >= rgt)) {
@@ -1916,7 +1918,7 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param, int lft, int rgt
   node->X.clear();
 
   for( _int i=0; i<num_X; i++ )
-    node->X.push_back( make_pair( i, 0) );
+    node->X.push_back( make_pair( i, 1) );
 
   if(PD_DEBUG)
     cout << "nodes.size(): " << nodes.size() << endl;
@@ -1938,14 +1940,16 @@ SMatF* predict_tree( SMatF* tst_X_Xf, Tree* tree, Param& param, int lft, int rgt
     update_next_level( i, nodes, score_mat, id_type_mat, param );
     if(PD_DEBUG)
       cout << "node " << i << " ended" << endl;
+
   }
 
+    if(PD_DEBUG)
+        cout << "exponentiate scores started "<< endl;
+    //exponentiate_scores( score_mat );
+    if(PD_DEBUG)
+        cout << "exponentiate scores ended "<< endl;
+
   cout << score_mat->nc << ' ' << score_mat->nr << endl;
-  if(PD_DEBUG)
-    cout << "exponentiate scores started "<< endl;
-  exponentiate_scores( score_mat );
-  if(PD_DEBUG)
-    cout << "exponentiate scores ended "<< endl;
   score_mat->nr = num_Y;
 
   delete id_type_mat;  // release memory!

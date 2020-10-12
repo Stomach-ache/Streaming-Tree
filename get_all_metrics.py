@@ -101,7 +101,8 @@ avg_f1_inst = 0
 #tmp_targets = targets.copy()
 
 while j + batch_size <= num_label + int(batch_size * 0.1):
-    print ("===============")
+    print ('*****************')
+    print ('*****************')
     score_file = args.model_dir + "/score_mat_init_ratio_" + str(int(args.init_ratio * 100)) + "_batch_size_" + str(batch_size) + "_" + str(batch_idx)
     print (score_file)
     prob = data_utils.read_sparse_file(score_file, force_header=True)
@@ -116,6 +117,7 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
     '''
     tmp_prob = prob.toarray()
     binary_pred = np.round([tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt)])
+    binary_pred = binary_pred > 0.5
     binary_pred = binary_pred.transpose()
     for i in range(num_sample):
         '''
@@ -160,41 +162,53 @@ while j + batch_size <= num_label + int(batch_size * 0.1):
     print (gt.shape, pred.shape)
     rounded = 4
     Coverage_error = round((coverage_error(gt, pred)) / (rgt-lft), rounded)
-    print (f'Coverage error: {Coverage_error}')
 
     Ranking_loss = round(label_ranking_loss(gt, pred), rounded)
-    print (f'Ranking loss: {Ranking_loss}')
 
-    print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
+#    print(f'Precision@1,3,5: {get_p_1(res, targets, mlb)}, {get_p_3(res, targets, mlb)}, {get_p_5(res, targets, mlb)}')
 
     Hamming_loss = round(hamming_loss(gt, binary_pred), rounded)
-    print (f'Hamming loss: {Hamming_loss}')
 
+    # for F-measure, threshold is set via a validation set
+    # we simply set the threshold as (0.5 / 6) = 1/12
+    thre = 6
+    binary_pred = np.round([tmp_prob[:, lbl_idx[l]] * thre for l in range(lft, rgt)])
+    binary_pred = binary_pred > 0.5
+    binary_pred = binary_pred.transpose()
     F1_macro = round(f1_score(gt, binary_pred, average='macro', zero_division=0), rounded)
-    print (f'F1 macro: {F1_macro}')
 
     F1_micro = round(f1_score(gt, binary_pred, average='micro', zero_division=0), rounded)
-    print (f'F1 micro: {F1_micro}')
 
     F1_inst = round(f1_score(gt, binary_pred, average='samples', zero_division=0), rounded)
-    print (f'F1 instance: {F1_inst}')
+
+    prec1 = get_p_1(res, targets, mlb)
+
+    print ('======Coverage: {0:.4f} and in percentage: {1:.2f}'.format(Coverage_error, Coverage_error*100))
+    print ('======Ranking Loss: {0:.4f} and in percentage: {1:.2f}'.format(Ranking_loss, Ranking_loss*100))
+    print ('======Precision@1: {0:.4f} and in percentage: {1:.2f}'.format(prec1/100, prec1))
 
     if ground_truth.shape[1] < 10**3:
         average_precision = round(average_precision_score(gt, pred), rounded)
-        print (f'Precision score: {average_precision}')
+        print ('======Precision score: {0:.4f} and in percentage: {1:.2f}'.format(average_precision, average_precision*100))
 
         gt = [ground_truth[:, lbl_idx[l]] for l in range(lft, rgt) if sum(ground_truth[:, lbl_idx[l]]) > 0]
         gt = np.array(gt).transpose()
         pred = [tmp_prob[:, lbl_idx[l]] for l in range(lft, rgt) if sum(ground_truth[:, lbl_idx[l]]) > 0]
         pred = np.array(pred).transpose()
         AUC_macro = round(roc_auc_score(gt, pred, average='macro'), rounded)
-        print (f'AUC_macro: {AUC_macro}')
+        print ('======AUC_macro: {0:.4f} and in percentage: {1:.2f}'.format(AUC_macro, AUC_macro*100))
 
     AUC_micro = round(roc_auc_score(gt, pred, average='micro'), rounded)
-    print (f'AUC_micro: {AUC_micro}')
+
+
+    print ('======AUC_micro: {0:.4f} and in percentage: {1:.2f}'.format(AUC_micro, AUC_micro*100))
+    print ('======Hamming Loss: {0:.4f} and in percentage: {1:.2f}'.format(Hamming_loss, Hamming_loss*100))
+    print ('======F1_macro: {0:.4f} and in percentage: {1:.2f}'.format(F1_macro, F1_macro*100))
+    print ('======F1_micro: {0:.4f} and in percentage: {1:.2f}'.format(F1_micro, F1_micro*100))
+    print ('======F1_instance: {0:.4f} and in percentage: {1:.2f}'.format(F1_inst, F1_inst*100))
 
     if batch_idx > 0:
-        avg_p1 += get_p_1(res, targets, mlb)
+        avg_p1 += prec1 #get_p_1(res, targets, mlb)
         if ground_truth.shape[1] < 10**3:
             avg_auc_macro += AUC_macro
             avg_prec += average_precision
@@ -223,16 +237,18 @@ avg_ham/= (batch_idx - 1)
 avg_f1_macro /= (batch_idx - 1)
 avg_f1_micro /= (batch_idx - 1)
 avg_f1_inst /= (batch_idx - 1)
-print ('======Average Coverage: {0:.4f}'.format(avg_cov))
-print ('======Average Ranking Loss: {0:.4f}'.format(avg_rankloss))
-print ('======Average Precision@1: {0:.4f}'.format(avg_p1/100))
-print ('======Average Precision: {0:.4f}'.format(avg_prec))
-print ('======Average AUC_macro: {0:.4f}'.format(avg_auc_macro))
-print ('======Average AUC_micro: {0:.4f}'.format(avg_auc_micro))
-print ('======Average Hamming Loss: {0:.4f}'.format(avg_ham))
-print ('======Average F1_macro: {0:.4f}'.format(avg_f1_macro))
-print ('======Average F1_micro: {0:.4f}'.format(avg_f1_micro))
-print ('======Average F1_instance: {0:.4f}'.format(avg_f1_inst))
+print ('*****************')
+print ('*****************')
+print ('======Average Coverage: {0:.4f} and in percentage: {1:.2f}'.format(avg_cov, avg_cov*100))
+print ('======Average Ranking Loss: {0:.4f} and in percentage: {1:.2f}'.format(avg_rankloss, avg_rankloss*100))
+print ('======Average Precision@1: {0:.4f} and in percentage: {1:.2f}'.format(avg_p1/100, avg_p1))
+print ('======Average Precision score: {0:.4f} and in percentage: {1:.2f}'.format(avg_prec, avg_prec*100))
+print ('======Average AUC_macro: {0:.4f} and in percentage: {1:.2f}'.format(avg_auc_macro, avg_auc_macro*100))
+print ('======Average AUC_micro: {0:.4f} and in percentage: {1:.2f}'.format(avg_auc_micro, avg_auc_micro*100))
+print ('======Average Hamming Loss: {0:.4f} and in percentage: {1:.2f}'.format(avg_ham, avg_ham*100))
+print ('======Average F1_macro: {0:.4f} and in percentage: {1:.2f}'.format(avg_f1_macro, avg_f1_macro*100))
+print ('======Average F1_micro: {0:.4f} and in percentage: {1:.2f}'.format(avg_f1_micro, avg_f1_micro*100))
+print ('======Average F1_instance: {0:.4f} and in percentage: {1:.2f}'.format(avg_f1_inst, avg_f1_inst*100))
 #print (f'======Average Correct Unvalid: {avg_correct_unvalid}')
 
 '''

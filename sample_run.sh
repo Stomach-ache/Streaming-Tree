@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#dataset="wiki10"
-#dataset="eurlex"
-#dataset="delicious"
-dataset="mirflickr"
+dataset="wiki10"
+dataset="eurlex"
+dataset="delicious"
+#dataset="mirflickr"
 data_dir="../sandbox/data/$dataset"
 results_dir="../sandbox/results/$dataset"
 model_dir="../sandbox/results/$dataset/model"
@@ -16,7 +16,7 @@ tst_lbl_file="${data_dir}/tst_X_Y.txt"
 trn_score_file="${results_dir}/trn_score_mat.txt"
 tst_score_file="${results_dir}/tst_score_mat.txt"
 init_ratio=0.5
-batch_size=6
+batch_size=500
 rand_seed=95
 
 if [[ "$dataset" == "eurlex" ]]; then
@@ -37,9 +37,9 @@ mkdir -p $model_dir
 # NOTE: The usage of Bonsai for other datasets requires setting parameter `-m` to 2 for smaller datasets like EUR-Lex, Wikipedia-31K 
 #       and to 3 for larger datasets like Delicious-200K, WikiLSHTC-325K, Amazon-670K, Wikipedia-500K, Amazon-3M.
 
-python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
+#python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
 
-#'''
+'''
 ./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
     -T 3 \
     -s 0 \
@@ -55,13 +55,13 @@ python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
     -q 0 \
     -ptype 0 \
     -ctype 0
-#'''
+'''
 
 # testing on training set
 #./bonsai_predict $trn_ft_file $trn_score_file $model_dir
 
 # Reads test features (in $tst_ft_file), FastXML model (in $model_dir), and writes test label scores to $score_file
-./bonsai_predict $tst_ft_file $tst_score_file $model_dir
+#./bonsai_predict $tst_ft_file $tst_score_file $model_dir
 #if [ ! -f ${score_file} ]; then
 #    ./bonsai_predict $tst_ft_file $score_file $model_dir
 #else
