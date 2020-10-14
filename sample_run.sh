@@ -1,8 +1,8 @@
 #!/bin/bash
 
-dataset="wiki10"
+#dataset="wiki10"
 dataset="eurlex"
-dataset="delicious"
+#dataset="delicious"
 #dataset="mirflickr"
 data_dir="../sandbox/data/$dataset"
 results_dir="../sandbox/results/$dataset"
@@ -39,7 +39,7 @@ mkdir -p $model_dir
 
 #python gen_lbl_perm.py -md $model_dir -sz $num_label -sd $rand_seed
 
-'''
+#'''
 ./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
     -T 3 \
     -s 0 \
@@ -55,7 +55,7 @@ mkdir -p $model_dir
     -q 0 \
     -ptype 0 \
     -ctype 0
-'''
+#'''
 
 # testing on training set
 #./bonsai_predict $trn_ft_file $trn_score_file $model_dir

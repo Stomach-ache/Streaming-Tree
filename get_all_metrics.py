@@ -37,7 +37,8 @@ def csr2list(M):
 
 Ytr = data_utils.read_sparse_file(args.trnYfile, force_header=True)
 Yte = data_utils.read_sparse_file(args.tstYfile, force_header=True)
-prob = data_utils.read_sparse_file(args.score, force_header=True)
+prob = data_utils.read_sparse_file(args.model_dir + "/overall_score_mat_init_ratio_50_batch_size_" + str(args.batch_size), force_header=True)
+#prob = data_utils.read_sparse_file(args.score, force_header=True)
 
 # dense label matrix
 ground_truth = Yte.toarray().astype(np.int32)

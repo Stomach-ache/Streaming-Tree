@@ -227,6 +227,11 @@ int main(int argc, char* argv[])
       if (i >= num_lbl) break;
   }
   // modified_code ends....2020.09.11
+    float prediction_time = 0, model_size = 0;
+    SMatF* score_mat = predict_trees(tst_X_Xf, param, model_dir, prediction_time, model_size, 0, num_lbl);
+    string score_file = model_dir + "/overall_score_mat_init_ratio_" + to_string(int(init_ratio * 100)) + "_batch_size_" + to_string(batch_size);
+    score_mat->write(score_file);
+    delete score_mat;
 
   /*
   _float train_time;
