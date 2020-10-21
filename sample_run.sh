@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#dataset="wiki10"
-dataset="eurlex"
+dataset="wiki10"
+#dataset="eurlex"
 #dataset="delicious"
 #dataset="mirflickr"
 data_dir="../sandbox/data/$dataset"
@@ -16,7 +16,7 @@ tst_lbl_file="${data_dir}/tst_X_Y.txt"
 trn_score_file="${results_dir}/trn_score_mat.txt"
 tst_score_file="${results_dir}/tst_score_mat.txt"
 init_ratio=0.5
-batch_size=500
+batch_size=3000
 rand_seed=95
 
 if [[ "$dataset" == "eurlex" ]]; then
@@ -43,7 +43,7 @@ mkdir -p $model_dir
 ./bonsai_train $trn_ft_file $trn_lbl_file $trn_ft_lbl_file $tst_ft_file $model_dir $init_ratio $batch_size \
     -T 3 \
     -s 0 \
-    -t 3 \
+    -t 1 \
     -w 100 \
     -b 1 \
     -c 1.0 \
@@ -61,7 +61,7 @@ mkdir -p $model_dir
 #./bonsai_predict $trn_ft_file $trn_score_file $model_dir
 
 # Reads test features (in $tst_ft_file), FastXML model (in $model_dir), and writes test label scores to $score_file
-#./bonsai_predict $tst_ft_file $tst_score_file $model_dir
+./bonsai_predict $tst_ft_file $tst_score_file $model_dir
 #if [ ! -f ${score_file} ]; then
 #    ./bonsai_predict $tst_ft_file $score_file $model_dir
 #else

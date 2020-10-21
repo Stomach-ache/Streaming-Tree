@@ -8,13 +8,14 @@ bool isFloat( string myString ) {
   iss >> noskipws >> f; // noskipws considers leading whitespace invalid
   // Check the entire string was consumed and if either failbit or badbit is set
   return iss.eof() && !iss.fail();
-  
+
 }
 
 
-vector<int> pick(int N, int k) {
+vector<int> pick(int N, int k, int seed) {
   random_device rd;
-  mt19937 gen(rd());
+  //mt19937 gen(rd());
+  mt19937 gen(seed);
 
   unordered_set<int> elems = pickSet(N, k, gen);
 

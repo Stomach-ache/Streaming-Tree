@@ -247,7 +247,8 @@ float l2r_erm_fun::line_search(float *d, float *w, float *g, float alpha, float 
 	float gTd = 0;
 	float eta = 0.01;
 	int w_size = get_nr_variable();
-	int max_num_linesearch = 1000;
+	int max_num_linesearch = 100;
+	//int max_num_linesearch = 1000;
 	Xv(d, tmp);
 
 	for (i=0;i<w_size;i++)
@@ -516,6 +517,8 @@ typedef signed char schar;
 //void solve_l2r_lr_dual(const problem *prob, float *w, float eps, float Cp, float Cn)
 void solve_l2r_lr_dual( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
+  reng.seed(0);
+
   _int l = X_Xf->nc;
   _int w_size = X_Xf->nr;
   _int i, s, iter = 0;
@@ -715,6 +718,8 @@ void solve_L2R_L2LOSS_SVC( SMatF* X_Xf, _int* y, _float *w, _float eps, _float C
 
 void solve_l2r_l1l2_svc( SMatF* X_Xf, _int* y, _float *w, _float eps, _float Cp, _float Cn, _int svm_iter, bool reset_w )
 {
+  reng.seed(0);
+
   _int l = X_Xf->nc;
   _int w_size = X_Xf->nr;
 
@@ -1257,7 +1262,7 @@ void kmeans( SMatF* mat, _float acc, VecI& partition, _int K, int tree_no) {
   K = min(K, nc / 3);
   vector<_int> c(K);
 
-    c = pick(nc, K);
+    c = pick(nc, K, tree_no);
 
 
   if(KMEANS_DEBUG) {
@@ -2096,7 +2101,7 @@ SMatF* predict_trees( SMatF* tst_X_Xf, Param& param, string model_dir, _float& p
         }
         sort( score_mat->data[i], score_mat->data[i] + siz, comp_pair_by_second_desc<_int,_float> );
 
-        _int newsiz = min( siz, 3000 ); // report the top 100?
+        _int newsiz = min( siz, 100 ); // report the top 100?
         Realloc( siz, newsiz, score_mat->data[i] );
         score_mat->size[i] = newsiz;
         sort( score_mat->data[i], score_mat->data[i] + newsiz, comp_pair_by_first<_int,_float> ); // sort by label id

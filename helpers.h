@@ -10,5 +10,5 @@
 using namespace std;
 
 bool isFloat(string myString);
-vector<int> pick(int N, int k);
+vector<int> pick(int N, int k, int seed);
 unordered_set<int> pickSet(int N, int k, mt19937& gen);

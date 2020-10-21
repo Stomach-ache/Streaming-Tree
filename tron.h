@@ -30,7 +30,7 @@ public:
 class TRON
 {
 public:
-	TRON(const Function *fun_obj, float eps = 0.1, float eps_cg = 0.1, int max_iter = 1000);
+	TRON(const Function *fun_obj, float eps = 0.1, float eps_cg = 0.1, int max_iter = 100);
 	~TRON();
 
 	void gd(float *w);
